@@ -2,7 +2,7 @@
   <div class="finance-container">
     <div class="header">
       <h2>🔒 我的私人記帳本</h2>
-      <p class="subtitle">紀錄每一筆小美好與追星基金 💖</p>
+      <p class="subtitle">紀錄每一筆小美好與追星基金 🧁✨</p>
     </div>
 
     <!-- 本月概覽卡片 -->
@@ -115,7 +115,6 @@ export default {
     const records = ref([]);
     const loading = ref(true);
 
-    // 支出分類
     const expenseCategories = ref([
       '🍱 飲食',
       '🚗 交通',
@@ -124,7 +123,6 @@ export default {
       '💎 追隨'
     ]);
 
-    // 收入分類
     const incomeCategories = ref([
       '💵 薪水收入',
       '🎁 紅包/獎金',
@@ -132,7 +130,6 @@ export default {
       '✨ 其他收入'
     ]);
 
-    // 表單初始化
     const form = ref({
       date: new Date().toISOString().split('T')[0],
       type: 'expense',
@@ -141,7 +138,6 @@ export default {
       note: ''
     });
 
-    // 讀取紀錄
     const fetchRecords = async () => {
       loading.value = true;
       try {
@@ -159,7 +155,6 @@ export default {
       }
     };
 
-    // 新增紀錄
     const addRecord = async () => {
       if (!form.value.amount || form.value.amount <= 0) return;
       try {
@@ -180,7 +175,6 @@ export default {
       }
     };
 
-    // 刪除紀錄
     const deleteRecord = async (id) => {
       if (!confirm('確定要刪除這筆紀錄嗎？')) return;
       try {
@@ -191,14 +185,12 @@ export default {
       }
     };
 
-    // 計算總收入
     const totalIncome = computed(() => {
       return records.value
         .filter(r => r.type === 'income')
         .reduce((sum, r) => sum + r.amount, 0);
     });
 
-    // 計算總支出
     const totalExpense = computed(() => {
       return records.value
         .filter(r => r.type === 'expense')
@@ -224,13 +216,22 @@ export default {
 };
 </script>
 
+<style>
+/* 全域奶油色底色 */
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #fdfaf2; /* 溫柔奶油暖黃色底 */
+}
+</style>
+
 <style scoped>
 .finance-container {
   max-width: 650px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 24px 16px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  color: #333;
+  color: #5c4d42; /* 焦糖暖褐色文字 */
 }
 
 .header {
@@ -240,14 +241,15 @@ export default {
 
 .header h2 {
   margin: 0;
-  font-size: 24px;
-  color: #2c3e50;
+  font-size: 26px;
+  color: #785232; /* 濃郁奶茶色 */
+  letter-spacing: 0.5px;
 }
 
 .subtitle {
-  margin-top: 5px;
+  margin-top: 6px;
   font-size: 14px;
-  color: #7f8c8d;
+  color: #a08369;
 }
 
 .summary-cards {
@@ -258,44 +260,47 @@ export default {
 
 .card {
   flex: 1;
-  padding: 16px;
-  border-radius: 12px;
-  background: #ffffff;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  padding: 16px 12px;
+  border-radius: 16px;
+  background: #fffdf7;
+  border: 1px solid #f3e9d2;
+  box-shadow: 0 4px 15px rgba(212, 184, 150, 0.15);
   text-align: center;
 }
 
 .card-label {
   font-size: 13px;
-  color: #7f8c8d;
+  color: #8c7355;
   display: block;
   margin-bottom: 6px;
+  font-weight: 500;
 }
 
 .card-amount {
   margin: 0;
   font-size: 20px;
-  font-weight: bold;
+  font-weight: 700;
 }
 
-.card.income .card-amount { color: #27ae60; }
-.card.expense .card-amount { color: #e74c3c; }
-.card.balance .card-amount { color: #2980b9; }
-.card-amount.negative { color: #e74c3c; }
+.card.income .card-amount { color: #519872; } /* 柔和莫蘭迪綠 */
+.card.expense .card-amount { color: #d96b68; } /* 柔和草莓粉紅 */
+.card.balance .card-amount { color: #785232; }
+.card-amount.negative { color: #d96b68; }
 
 .card-box {
   background: #ffffff;
-  border-radius: 16px;
-  padding: 20px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border-radius: 20px;
+  padding: 22px;
+  border: 1px solid #f3e9d2;
+  box-shadow: 0 6px 20px rgba(212, 184, 150, 0.12);
   margin-bottom: 25px;
 }
 
 .card-box h3 {
   margin-top: 0;
-  margin-bottom: 15px;
+  margin-bottom: 18px;
   font-size: 18px;
-  color: #34495e;
+  color: #785232;
 }
 
 .form-row {
@@ -311,47 +316,57 @@ export default {
 }
 
 .form-group.full-width {
-  margin-bottom: 15px;
+  margin-bottom: 18px;
 }
 
 .form-group label {
   font-size: 13px;
   font-weight: 600;
   margin-bottom: 6px;
-  color: #555;
+  color: #8c7355;
 }
 
 .form-group input, .form-group select {
-  padding: 10px 12px;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  padding: 11px 14px;
+  background: #fffdf9;
+  border: 1px solid #ebdcc4;
+  border-radius: 12px;
   font-size: 14px;
+  color: #5c4d42;
   outline: none;
+  transition: all 0.2s ease;
 }
 
 .form-group input:focus, .form-group select:focus {
-  border-color: #3498db;
+  border-color: #d4a373;
+  box-shadow: 0 0 0 3px rgba(212, 163, 115, 0.2);
 }
 
 .submit-btn {
   width: 100%;
-  padding: 12px;
-  background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+  padding: 13px;
+  background: linear-gradient(135deg, #f4a261 0%, #e76f51 100%); /* 暖黃橘焦糖漸層 */
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 14px;
   font-size: 16px;
   font-weight: bold;
   cursor: pointer;
+  box-shadow: 0 4px 12px rgba(231, 111, 81, 0.25);
+  transition: transform 0.1s ease, opacity 0.2s;
 }
 
 .submit-btn:hover {
-  opacity: 0.9;
+  opacity: 0.95;
+}
+
+.submit-btn:active {
+  transform: scale(0.99);
 }
 
 .status-msg {
   text-align: center;
-  color: #95a5a6;
+  color: #b09a85;
   padding: 20px 0;
 }
 
@@ -365,8 +380,8 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid #f0f0f0;
+  padding: 14px 0;
+  border-bottom: 1px solid #f7f1e3;
 }
 
 .record-item:last-child {
@@ -380,11 +395,13 @@ export default {
 }
 
 .category-badge {
-  background: #f8f9fa;
-  border: 1px solid #e9ecef;
-  padding: 6px 10px;
-  border-radius: 8px;
+  background: #fefae0;
+  border: 1px solid #faedcd;
+  color: #785232;
+  padding: 6px 12px;
+  border-radius: 10px;
   font-size: 13px;
+  font-weight: 500;
 }
 
 .item-detail {
@@ -394,13 +411,14 @@ export default {
 
 .note-text {
   font-size: 14px;
-  font-weight: 500;
-  color: #2c3e50;
+  font-weight: 600;
+  color: #5c4d42;
 }
 
 .date-text {
   font-size: 12px;
-  color: #bdc3c7;
+  color: #b09a85;
+  margin-top: 2px;
 }
 
 .item-right {
@@ -414,13 +432,19 @@ export default {
   font-weight: bold;
 }
 
-.record-item.expense .amount-text { color: #e74c3c; }
-.record-item.income .amount-text { color: #27ae60; }
+.record-item.expense .amount-text { color: #d96b68; }
+.record-item.income .amount-text { color: #519872; }
 
 .del-btn {
   background: none;
   border: none;
   font-size: 16px;
   cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+}
+
+.del-btn:hover {
+  opacity: 1;
 }
 </style>
