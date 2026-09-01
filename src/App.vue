@@ -42,6 +42,12 @@
         </div>
       </div>
 
+      <!-- 支出比例圓餅圖分析 -->
+      <div class="card-box chart-card" v-if="records.filter(r => r.type === 'expense').length > 0">
+        <h3>📊 支出分析圓餅圖</h3>
+        <PieChart :records="records" />
+      </div>
+
       <!-- 新增記帳表單 -->
       <div class="card-box form-card">
         <h3>✍️ 新增一筆紀錄</h3>
@@ -127,12 +133,13 @@ import {
   deleteDoc, 
   doc, 
   query, 
-  where,
-  orderBy 
+  where
 } from 'firebase/firestore';
+import PieChart from './components/PieChart.vue';
 
 export default {
   name: 'App',
+  components: { PieChart },
   setup() {
     const user = ref(null);
     const records = ref([]);
@@ -149,7 +156,6 @@ export default {
       note: ''
     });
 
-    // Google 登入
     const handleSignIn = async () => {
       try {
         await signInWithPopup(auth, provider);
@@ -158,7 +164,6 @@ export default {
       }
     };
 
-    // 登出
     const handleSignOut = async () => {
       try {
         await signOut(auth);
@@ -168,22 +173,22 @@ export default {
       }
     };
 
-    // 讀取屬於當前用戶的紀錄
     const fetchRecords = async () => {
       if (!user.value) return;
       loading.value = true;
       try {
         const q = query(
           collection(db, 'personal_records'),
-          where('uid', '==', user.value.uid),
-          orderBy('date', 'desc')
+          where('uid', '==', user.value.uid)
         );
         const querySnapshot = await getDocs(q);
         const list = [];
         querySnapshot.forEach((docSnap) => {
           list.push({ id: docSnap.id, ...docSnap.data() });
         });
-        records.value = list;
+        
+        // 前端自動按日期倒序
+        records.value = list.sort((a, b) => new Date(b.date) - new Date(a.date));
       } catch (error) {
         console.error('讀取紀錄失敗:', error);
       } finally {
@@ -191,7 +196,6 @@ export default {
       }
     };
 
-    // 新增紀錄（包含用戶 uid）
     const addRecord = async () => {
       if (!form.value.amount || form.value.amount <= 0 || !user.value) return;
       try {
@@ -231,7 +235,6 @@ export default {
       return records.value.filter(r => r.type === 'expense').reduce((sum, r) => sum + r.amount, 0);
     });
 
-    // 監聽登入狀態變更
     onMounted(() => {
       onAuthStateChanged(auth, (currentUser) => {
         user.value = currentUser;
@@ -377,6 +380,13 @@ body {
   border: 1px solid #f3e9d2;
   box-shadow: 0 6px 20px rgba(212, 184, 150, 0.12);
   margin-bottom: 25px;
+}
+
+.card-box h3 {
+  margin-top: 0;
+  margin-bottom: 18px;
+  font-size: 18px;
+  color: #785232;
 }
 
 .form-row {
