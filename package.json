@@ -1,5 +1,5 @@
 {
-  "name": "my-finance",
+  "name": "moneymoney",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -9,8 +9,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "chart.js": "^4.4.1",
     "firebase": "^10.8.0",
     "vue": "^3.4.15",
+    "vue-chartjs": "^5.3.0",
     "vue-router": "^4.2.5"
   },
   "devDependencies": {
