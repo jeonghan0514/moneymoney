@@ -276,7 +276,7 @@
         </ul>
       </div>
 
-      <!-- 分頁 5：分類管理 (顯示全量分類：預設 + 自訂) -->
+      <!-- 分頁 5：分類管理 (可直接輸入色號) -->
       <div v-if="currentTab === 'categories'" class="card-box tab-content">
         <h3><i class="fa-solid fa-sliders"></i> 分類管理與設定</h3>
 
@@ -319,11 +319,18 @@
               </div>
             </div>
 
+            <!-- 直接打色號專用區塊 -->
             <div class="form-group full-width">
-              <label>圖表代表色</label>
+              <label>圖表代表色 (可直接輸入 HEX 色號，如 #F4A261)</label>
               <div class="color-picker-wrapper">
                 <input type="color" v-model="catForm.color" class="color-picker" />
-                <span class="color-hex">{{ catForm.color }}</span>
+                <input 
+                  type="text" 
+                  v-model="catForm.color" 
+                  placeholder="#F4A261" 
+                  class="color-hex-input"
+                  maxlength="7"
+                />
               </div>
             </div>
 
@@ -451,7 +458,6 @@ export default {
       return years;
     });
 
-    // 系統預設基礎分類 (完整的定義)
     const defaultCategories = [
       { name: '飲食', type: 'expense', icon: 'fa-solid fa-utensils', color: '#f4a261', isDefault: true },
       { name: '交通', type: 'expense', icon: 'fa-solid fa-car', color: '#e76f51', isDefault: true },
@@ -464,7 +470,6 @@ export default {
       { name: '其他收入', type: 'income', icon: 'fa-solid fa-coins', color: '#2a9d8f', isDefault: true }
     ];
 
-    // 全量呈現列表中 (包含預設與雲端自訂)
     const displayAllCategories = computed(() => {
       const customNames = customCategoryList.value.map(c => c.name);
       const filteredDefaults = defaultCategories.filter(d => !customNames.includes(d.name));
@@ -566,23 +571,27 @@ export default {
     const saveCategory = async () => {
       if (!catForm.value.name.trim() || !user.value) return;
 
+      // 校正色號格式 (補上 # 號)
+      let formattedColor = catForm.value.color.trim();
+      if (!formattedColor.startsWith('#')) {
+        formattedColor = '#' + formattedColor;
+      }
+
       try {
         if (editingId.value && !isEditingDefault.value) {
-          // 已存在的雲端自訂分類，進行更新
           await updateDoc(doc(db, 'custom_categories', editingId.value), {
             name: catForm.value.name.trim(),
             type: catForm.value.type,
             icon: catForm.value.icon,
-            color: catForm.value.color
+            color: formattedColor
           });
         } else {
-          // 新增自訂分類，或是覆蓋修改系統預設分類
           await addDoc(collection(db, 'custom_categories'), {
             uid: user.value.uid,
             name: catForm.value.name.trim(),
             type: catForm.value.type,
             icon: catForm.value.icon,
-            color: catForm.value.color,
+            color: formattedColor,
             createdAt: new Date()
           });
         }
@@ -1357,13 +1366,14 @@ body {
   margin-bottom: 14px;
 }
 
+/* 直接打色號專用樣式 */
 .color-picker-wrapper {
   display: flex;
   align-items: center;
   gap: 10px;
   background: #fffdf9;
   border: 1px solid #ebdcc4;
-  padding: 6px 10px;
+  padding: 6px 12px;
   border-radius: 12px;
 }
 
@@ -1373,12 +1383,19 @@ body {
   border: none;
   background: transparent;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
-.color-hex {
-  font-size: 12px;
-  font-weight: 600;
-  color: #8c7355;
+.color-hex-input {
+  border: none !important;
+  background: transparent !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: #5c4d42 !important;
+  padding: 0 !important;
+  outline: none !important;
+  width: 100%;
+  text-transform: uppercase;
 }
 
 .cat-form-actions {
