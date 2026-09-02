@@ -26,11 +26,11 @@
 
     <!-- 登入後的主要區域 -->
     <template v-else>
-      <!-- 隱私開關與本月概覽卡片 -->
+      <!-- 隱私開關與頂部三大概覽卡片 -->
       <div class="privacy-bar">
         <button @click="togglePrivacy" class="privacy-btn">
           <i class="fa-solid" :class="isPrivacyMode ? 'fa-eye-slash' : 'fa-eye'"></i>
-          {{ isPrivacyMode ? '顯示金額' : '隱私隱藏' }}
+          {{ isPrivacyMode ? '顯示頂部金額' : '隱藏頂部金額' }}
         </button>
       </div>
 
@@ -165,10 +165,7 @@
         <div class="advance-summary">
           <span>待收代墊款總計</span>
           <h2 class="advance-total">
-            <span v-if="isPrivacyMode" class="diamond-mask lg">
-              <i class="fa-solid fa-gem"></i><i class="fa-solid fa-gem"></i><i class="fa-solid fa-gem"></i>
-            </span>
-            <span v-else>${{ totalPendingAdvance.toLocaleString() }}</span>
+            ${{ totalPendingAdvance.toLocaleString() }}
           </h2>
         </div>
 
@@ -184,12 +181,7 @@
                 <div class="borrower-name-box">
                   <h4 class="borrower-name">{{ group.borrower }}</h4>
                   <span class="borrower-count">
-                    小計: 
-                    <strong v-if="isPrivacyMode" class="diamond-mask sm">
-                      <i class="fa-solid fa-gem"></i><i class="fa-solid fa-gem"></i><i class="fa-solid fa-gem"></i>
-                    </strong>
-                    <strong v-else>${{ group.total.toLocaleString() }}</strong> 
-                    ({{ group.items.length }}筆)
+                    小計: <strong>${{ group.total.toLocaleString() }}</strong> ({{ group.items.length }}筆)
                   </span>
                 </div>
               </div>
@@ -211,12 +203,7 @@
                   <span class="sub-item-date">{{ item.date }}</span>
                 </div>
                 <div class="sub-item-right">
-                  <span class="sub-item-amount">
-                    <span v-if="isPrivacyMode" class="diamond-mask sm">
-                      <i class="fa-solid fa-gem"></i><i class="fa-solid fa-gem"></i><i class="fa-solid fa-gem"></i>
-                    </span>
-                    <span v-else>${{ item.amount }}</span>
-                  </span>
+                  <span class="sub-item-amount">${{ item.amount }}</span>
                   <button @click="markAsSettled(item.id)" class="mini-btn" title="單筆還款">已還</button>
                 </div>
               </li>
@@ -250,7 +237,7 @@
         <div v-if="chartMonthRecords.filter(r => r.type === 'expense').length === 0" class="status-msg">
           <i class="fa-solid fa-inbox msg-icon"></i> 該時間區間目前沒有腎痛支出紀錄喔！
         </div>
-        <PieChart v-else :records="chartMonthRecords" :customCategories="customCategoryList" :isPrivacyMode="isPrivacyMode" />
+        <PieChart v-else :records="chartMonthRecords" :customCategories="customCategoryList" />
       </div>
 
       <!-- 分頁 4：歷史紀錄明細 -->
@@ -303,12 +290,7 @@
             </div>
             <div class="item-right">
               <span class="amount-text">
-                <span v-if="isPrivacyMode" class="diamond-mask sm">
-                  <i class="fa-solid fa-gem"></i><i class="fa-solid fa-gem"></i><i class="fa-solid fa-gem"></i>
-                </span>
-                <template v-else>
-                  {{ item.type === 'expense' ? '-' : '+' }}${{ item.amount }}
-                </template>
+                {{ item.type === 'expense' ? '-' : '+' }}${{ item.amount }}
               </span>
               <button @click="deleteRecord(item.id)" class="del-btn" title="刪除">
                 <i class="fa-solid fa-trash-can"></i>
@@ -507,7 +489,6 @@ export default {
       return years;
     });
 
-    // 完整的你的專屬克拉調色清單
     const defaultCategories = [
       { name: '追星', type: 'expense', icon: 'fa-solid fa-wand-magic-sparkles', color: '#92A8D1', isDefault: true },
       { name: '娛樂', type: 'expense', icon: 'fa-solid fa-gamepad', color: '#D8B4E2', isDefault: true },
@@ -904,9 +885,6 @@ body {
   color: #f7cac9;
   filter: drop-shadow(0 2px 4px rgba(247, 202, 201, 0.4));
 }
-
-.diamond-mask.lg { font-size: 24px; gap: 6px; }
-.diamond-mask.sm { font-size: 13px; gap: 3px; }
 
 .header {
   text-align: center;
