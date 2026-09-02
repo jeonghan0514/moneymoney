@@ -20,7 +20,12 @@
 
         <div class="item-values">
           <span class="percentage">{{ item.percentage }}%</span>
-          <span class="amount">${{ item.amount.toLocaleString() }}</span>
+          <span class="amount">
+            <span v-if="isPrivacyMode" class="diamond-mask sm">
+              <i class="fa-solid fa-gem"></i><i class="fa-solid fa-gem"></i><i class="fa-solid fa-gem"></i>
+            </span>
+            <span v-else>${{ item.amount.toLocaleString() }}</span>
+          </span>
         </div>
       </div>
     </div>
@@ -51,23 +56,28 @@ export default {
     customCategories: {
       type: Array,
       default: () => []
+    },
+    isPrivacyMode: {
+      type: Boolean,
+      default: false
     }
   },
   setup(props) {
+    // 預設對應你的專屬莫蘭迪配色
     const defaultColors = {
-      '飲食': '#f4a261',
-      '交通': '#e76f51',
-      '購物': '#e9c46a',
-      '娛樂': '#2a9d8f',
-      '追星': '#9b5de5'
+      '追星': '#92A8D1',
+      '娛樂': '#D8B4E2',
+      '購物': '#B7E4C7',
+      '飲食': '#FFCCCC',
+      '交通': '#F3E3B6'
     };
 
     const defaultIcons = {
-      '飲食': 'fa-solid fa-utensils',
-      '交通': 'fa-solid fa-car',
-      '購物': 'fa-solid fa-bag-shopping',
+      '追星': 'fa-solid fa-wand-magic-sparkles',
       '娛樂': 'fa-solid fa-gamepad',
-      '追星': 'fa-solid fa-wand-magic-sparkles'
+      '購物': 'fa-solid fa-bag-shopping',
+      '飲食': 'fa-solid fa-utensils',
+      '交通': 'fa-solid fa-car'
     };
 
     const cleanCategoryName = (category) => {
@@ -98,7 +108,6 @@ export default {
           const amount = totals[cat];
           const percentage = ((amount / sum) * 100).toFixed(1);
           
-          // 查找自訂分類的顏色與 Icon
           const customItem = props.customCategories.find(c => c.name === cat);
           const icon = customItem ? customItem.icon : (defaultIcons[cat] || 'fa-solid fa-tag');
           const color = customItem ? customItem.color : (defaultColors[cat] || '#a08369');
@@ -225,4 +234,15 @@ export default {
   font-weight: bold;
   color: #d96b68;
 }
+
+/* 可愛玫瑰石英粉向量鑽石遮罩 */
+.diamond-mask {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #f7cac9;
+  filter: drop-shadow(0 2px 4px rgba(247, 202, 201, 0.4));
+}
+
+.diamond-mask.sm { font-size: 12px; gap: 3px; }
 </style>
