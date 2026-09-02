@@ -2,8 +2,8 @@
   <div class="finance-container">
     <!-- 頂部標題與用戶狀態 -->
     <div class="header">
-      <h2><i class="fa-solid fa-lock header-icon"></i> 私人記帳本</h2>
-      <p class="subtitle">紀錄每一筆小美好與追星基金 <i class="fa-solid fa-wand-magic-sparkles sub-icon"></i></p>
+      <h2><i class="fa-solid fa-notes-medical header-icon"></i> 腎痛紀錄</h2>
+      <p class="subtitle">紀錄每一筆快樂與血流成河的追星基金 <i class="fa-solid fa-wand-magic-sparkles sub-icon"></i></p>
       
       <div class="user-bar">
         <div v-if="user" class="user-info">
@@ -21,7 +21,7 @@
 
     <!-- 尚未登入提示 -->
     <div v-if="!user" class="card-box status-msg">
-      <p><i class="fa-solid fa-circle-info msg-icon"></i> 請先點擊上方按鈕登入 Google 帳號，即可跨裝置同步你的記帳紀錄。</p>
+      <p><i class="fa-solid fa-circle-info msg-icon"></i> 請先點擊上方按鈕登入 Google 帳號，即可跨裝置同步你的腎痛紀錄。</p>
     </div>
 
     <!-- 登入後的主要區域 -->
@@ -29,15 +29,15 @@
       <!-- 本月概覽卡片 -->
       <div class="summary-cards">
         <div class="card income">
-          <span class="card-label"><i class="fa-solid fa-chart-line"></i> 本月收入</span>
+          <span class="card-label"><i class="fa-solid fa-chart-line"></i> 本月回血</span>
           <h3 class="card-amount">+ ${{ totalIncome }}</h3>
         </div>
         <div class="card expense">
-          <span class="card-label"><i class="fa-solid fa-arrow-trend-down"></i> 本月支出</span>
+          <span class="card-label"><i class="fa-solid fa-arrow-trend-down"></i> 本月腎痛</span>
           <h3 class="card-amount">- ${{ totalExpense }}</h3>
         </div>
         <div class="card balance">
-          <span class="card-label"><i class="fa-solid fa-wallet"></i> 本月結餘</span>
+          <span class="card-label"><i class="fa-solid fa-wallet"></i> 剩餘血量</span>
           <h3 class="card-amount" :class="{ negative: (totalIncome - totalExpense) < 0 }">
             ${{ totalIncome - totalExpense }}
           </h3>
@@ -56,13 +56,13 @@
           :class="['tab-btn', { active: currentTab === 'chart' }]" 
           @click="currentTab = 'chart'"
         >
-          <i class="fa-solid fa-chart-pie"></i> 圖表分析
+          <i class="fa-solid fa-chart-pie"></i> 腎痛分析
         </button>
         <button 
           :class="['tab-btn', { active: currentTab === 'list' }]" 
           @click="currentTab = 'list'"
         >
-          <i class="fa-solid fa-receipt"></i> 歷史明細
+          <i class="fa-solid fa-receipt"></i> 傷痕明細
         </button>
       </div>
 
@@ -79,8 +79,8 @@
             <div class="form-group">
               <label>收支類型</label>
               <select v-model="form.type">
-                <option value="expense">支出</option>
-                <option value="income">收入</option>
+                <option value="expense">支出 (腎痛)</option>
+                <option value="income">收入 (回血)</option>
               </select>
             </div>
           </div>
@@ -106,7 +106,7 @@
 
           <div class="form-group full-width">
             <label>備註說明</label>
-            <input type="text" v-model="form.note" placeholder="例：買小卡、吃火鍋、捷運加值" />
+            <input type="text" v-model="form.note" placeholder="例：小卡、演唱會門票、周邊、吃火鍋" />
           </div>
 
           <button type="submit" class="submit-btn"><i class="fa-solid fa-check"></i> 儲存這筆紀錄</button>
@@ -115,18 +115,18 @@
 
       <!-- 分頁 2：支出圖表分析 -->
       <div v-if="currentTab === 'chart'" class="card-box tab-content">
-        <h3><i class="fa-solid fa-chart-simple"></i> 支出分類比例分析</h3>
+        <h3><i class="fa-solid fa-chart-simple"></i> 腎痛來源分類分析</h3>
         <div v-if="records.filter(r => r.type === 'expense').length === 0" class="status-msg">
-          <i class="fa-solid fa-inbox msg-icon"></i> 目前還沒有支出紀錄，無法生成圖表。
+          <i class="fa-solid fa-inbox msg-icon"></i> 目前還沒有腎痛紀錄，狀態良好！
         </div>
         <PieChart v-else :records="records" />
       </div>
 
       <!-- 分頁 3：歷史紀錄明細 -->
       <div v-if="currentTab === 'list'" class="card-box tab-content">
-        <h3><i class="fa-solid fa-list"></i> 收支紀錄明細</h3>
+        <h3><i class="fa-solid fa-list"></i> 腎痛與回血明細</h3>
         <div v-if="loading" class="status-msg"><i class="fa-solid fa-spinner fa-spin msg-icon"></i> 資料載入中...</div>
-        <div v-else-if="records.length === 0" class="status-msg"><i class="fa-solid fa-inbox msg-icon"></i> 目前還沒有紀錄，快來上記第一筆吧！</div>
+        <div v-else-if="records.length === 0" class="status-msg"><i class="fa-solid fa-inbox msg-icon"></i> 目前還沒有紀錄，快來記第一筆吧！</div>
         <ul v-else class="record-list">
           <li v-for="item in records" :key="item.id" :class="['record-item', item.type]">
             <div class="item-left">
