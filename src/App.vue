@@ -132,7 +132,7 @@
         </form>
       </div>
 
-      <!-- 分頁 2：代墊管理 (按人物卡片分組) -->
+      <!-- 分頁 2：代墊管理 (單排精緻按鈕版) -->
       <div v-if="currentTab === 'advance'" class="card-box tab-content">
         <h3><i class="fa-solid fa-hand-holding-dollar"></i> 代墊討債專區</h3>
         
@@ -146,30 +146,27 @@
         </div>
 
         <div v-else class="borrower-group-list">
-          <!-- 每位朋友一張卡片 -->
+          <!-- 每位朋友一張精緻卡片 -->
           <div v-for="group in groupedAdvanceList" :key="group.borrower" class="borrower-card">
             <div class="borrower-card-header">
+              <!-- 左側：人物頭像與名字 -->
               <div class="borrower-info">
                 <span class="borrower-avatar"><i class="fa-solid fa-user"></i></span>
                 <div class="borrower-name-box">
                   <h4 class="borrower-name">{{ group.borrower }}</h4>
-                  <span class="borrower-count">共 {{ group.items.length }} 筆待結算</span>
+                  <span class="borrower-count">小計: <strong>${{ group.total.toLocaleString() }}</strong> ({{ group.items.length }}筆)</span>
                 </div>
               </div>
-              <div class="borrower-total-box">
-                <span class="borrower-total-label">欠款小計</span>
-                <span class="borrower-total-amount">${{ group.total.toLocaleString() }}</span>
-              </div>
-            </div>
 
-            <!-- 操作按鈕區 -->
-            <div class="borrower-card-actions">
-              <button @click="copyGroupPrompt(group)" class="action-btn copy full">
-                <i class="fa-solid fa-copy"></i> 複製清單給 {{ group.borrower }}
-              </button>
-              <button @click="settleAllForBorrower(group)" class="action-btn settle-all full">
-                <i class="fa-solid fa-check-double"></i> 一鍵全部還清
-              </button>
+              <!-- 右側：同排精緻小按鈕 -->
+              <div class="borrower-header-actions">
+                <button @click="copyGroupPrompt(group)" class="mini-action-btn copy" title="複製 LINE 催帳訊息">
+                  <i class="fa-solid fa-copy"></i> 複製
+                </button>
+                <button @click="settleAllForBorrower(group)" class="mini-action-btn settle-all" title="全額還清">
+                  <i class="fa-solid fa-check-double"></i> 還清
+                </button>
+              </div>
             </div>
 
             <!-- 細項展開清單 -->
@@ -813,7 +810,7 @@ body {
   font-size: 28px;
 }
 
-/* 人物卡片分組奶油莫蘭迪配色 */
+/* 人物卡片精緻單排樣式 */
 .borrower-group-list {
   display: flex;
   flex-direction: column;
@@ -832,7 +829,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .borrower-info {
@@ -844,74 +841,70 @@ body {
 .borrower-avatar {
   background: #ddb892;
   color: white;
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 16px;
+  flex-shrink: 0;
+}
+
+.borrower-name-box {
+  display: flex;
+  flex-direction: column;
 }
 
 .borrower-name {
   margin: 0;
-  font-size: 16px;
+  font-size: 17px;
+  font-weight: 700;
   color: #5c4d42;
 }
 
 .borrower-count {
   font-size: 12px;
-  color: #a08369;
-}
-
-.borrower-total-box {
-  text-align: right;
-}
-
-.borrower-total-label {
-  display: block;
-  font-size: 11px;
   color: #8c7355;
+  margin-top: 2px;
 }
 
-.borrower-total-amount {
-  font-size: 18px;
-  font-weight: bold;
+.borrower-count strong {
   color: #d96b68;
 }
 
-.borrower-card-actions {
+/* 同排精緻小按鈕組 */
+.borrower-header-actions {
   display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
+  align-items: center;
+  gap: 6px;
 }
 
-.action-btn {
+.mini-action-btn {
   border: none;
-  padding: 8px 12px;
-  border-radius: 10px;
-  font-size: 13px;
-  font-weight: bold;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
   transition: opacity 0.2s;
 }
 
-.action-btn:hover {
-  opacity: 0.9;
+.mini-action-btn:hover {
+  opacity: 0.88;
 }
 
-.action-btn.copy {
+.mini-action-btn.copy {
   background: #f4a261;
   color: white;
 }
 
-.action-btn.settle-all {
+.mini-action-btn.settle-all {
   background: #b5838d;
   color: white;
-}
-
-.action-btn.full {
-  flex: 1;
 }
 
 .borrower-item-list {
