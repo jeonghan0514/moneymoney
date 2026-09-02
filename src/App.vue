@@ -1,9 +1,8 @@
 <template>
   <div class="finance-container">
-    <!-- 頂部標題與用戶狀態 -->
     <div class="header">
-      <h2><Lock class="header-icon" /> 私人記帳本</h2>
-      <p class="subtitle">紀錄每一筆小美好與追星基金 <Sparkles class="sub-icon" /></p>
+      <h2><component :is="icons.Lock" class="header-icon" /> 私人記帳本</h2>
+      <p class="subtitle">紀錄每一筆小美好與追星基金 <component :is="icons.Sparkles" class="sub-icon" /></p>
       
       <div class="user-bar">
         <div v-if="user" class="user-info">
@@ -13,62 +12,57 @@
         </div>
         <div v-else>
           <button @click="handleSignIn" class="auth-btn login">
-            <LogIn /> 使用 Google 登入雲端同步
+            <component :is="icons.LogIn" /> 使用 Google 登入雲端同步
           </button>
         </div>
       </div>
     </div>
 
-    <!-- 尚未登入提示 -->
     <div v-if="!user" class="card-box status-msg">
-      <p><Info class="msg-icon" /> 請先點擊上方按鈕登入 Google 帳號，即可跨裝置同步你的記帳紀錄。</p>
+      <p><component :is="icons.Info" class="msg-icon" /> 請先點擊上方按鈕登入 Google 帳號，即可跨裝置同步你的記帳紀錄。</p>
     </div>
 
-    <!-- 登入後的主要區域 -->
     <template v-else>
-      <!-- 本月概覽卡片 -->
       <div class="summary-cards">
         <div class="card income">
-          <span class="card-label"><TrendingUp /> 本月收入</span>
+          <span class="card-label"><component :is="icons.TrendingUp" /> 本月收入</span>
           <h3 class="card-amount">+ ${{ totalIncome }}</h3>
         </div>
         <div class="card expense">
-          <span class="card-label"><TrendingDown /> 本月支出</span>
+          <span class="card-label"><component :is="icons.TrendingDown" /> 本月支出</span>
           <h3 class="card-amount">- ${{ totalExpense }}</h3>
         </div>
         <div class="card balance">
-          <span class="card-label"><Wallet /> 本月結餘</span>
+          <span class="card-label"><component :is="icons.Wallet" /> 本月結餘</span>
           <h3 class="card-amount" :class="{ negative: (totalIncome - totalExpense) < 0 }">
             ${{ totalIncome - totalExpense }}
           </h3>
         </div>
       </div>
 
-      <!-- 分頁選單 -->
       <div class="tab-nav">
         <button 
           :class="['tab-btn', { active: currentTab === 'form' }]" 
           @click="currentTab = 'form'"
         >
-          <PlusCircle /> 新增紀錄
+          <component :is="icons.PlusCircle" /> 新增紀錄
         </button>
         <button 
           :class="['tab-btn', { active: currentTab === 'chart' }]" 
           @click="currentTab = 'chart'"
         >
-          <PieChartIcon /> 圖表分析
+          <component :is="icons.PieChart" /> 圖表分析
         </button>
         <button 
           :class="['tab-btn', { active: currentTab === 'list' }]" 
           @click="currentTab = 'list'"
         >
-          <Receipt /> 歷史明細
+          <component :is="icons.Receipt" /> 歷史明細
         </button>
       </div>
 
-      <!-- 分頁 1：新增記帳表單 -->
       <div v-if="currentTab === 'form'" class="card-box tab-content">
-        <h3><PenTool /> 新增一筆紀錄</h3>
+        <h3><component :is="icons.PenTool" /> 新增一筆紀錄</h3>
         <form @submit.prevent="addRecord" class="finance-form">
           <div class="form-row">
             <div class="form-group">
@@ -109,24 +103,22 @@
             <input type="text" v-model="form.note" placeholder="例：買小卡、吃火鍋、捷運加值" />
           </div>
 
-          <button type="submit" class="submit-btn"><Check /> 儲存這筆紀錄</button>
+          <button type="submit" class="submit-btn"><component :is="icons.Check" /> 儲存這筆紀錄</button>
         </form>
       </div>
 
-      <!-- 分頁 2：支出圖表分析 -->
       <div v-if="currentTab === 'chart'" class="card-box tab-content">
-        <h3><BarChart2 /> 支出分類比例分析</h3>
+        <h3><component :is="icons.BarChart2" /> 支出分類比例分析</h3>
         <div v-if="records.filter(r => r.type === 'expense').length === 0" class="status-msg">
-          <Inbox class="msg-icon" /> 目前還沒有支出紀錄，無法生成圖表。
+          <component :is="icons.Inbox" class="msg-icon" /> 目前還沒有支出紀錄，無法生成圖表。
         </div>
         <PieChart v-else :records="records" />
       </div>
 
-      <!-- 分頁 3：歷史紀錄明細 -->
       <div v-if="currentTab === 'list'" class="card-box tab-content">
-        <h3><List /> 收支紀錄明細</h3>
-        <div v-if="loading" class="status-msg"><Loader2 class="msg-icon spin" /> 資料載入中...</div>
-        <div v-else-if="records.length === 0" class="status-msg"><Inbox class="msg-icon" /> 目前還沒有紀錄，快來上記第一筆吧！</div>
+        <h3><component :is="icons.List" /> 收支紀錄明細</h3>
+        <div v-if="loading" class="status-msg"><component :is="icons.Loader2" class="msg-icon spin" /> 資料載入中...</div>
+        <div v-else-if="records.length === 0" class="status-msg"><component :is="icons.Inbox" class="msg-icon" /> 目前還沒有紀錄，快來上記第一筆吧！</div>
         <ul v-else class="record-list">
           <li v-for="item in records" :key="item.id" :class="['record-item', item.type]">
             <div class="item-left">
@@ -144,7 +136,7 @@
                 {{ item.type === 'expense' ? '-' : '+' }}${{ item.amount }}
               </span>
               <button @click="deleteRecord(item.id)" class="del-btn" title="刪除">
-                <Trash2 />
+                <component :is="icons.Trash2" />
               </button>
             </div>
           </li>
@@ -169,7 +161,7 @@ import {
 } from 'firebase/firestore';
 import PieChart from './components/PieChart.vue';
 
-// 引入 Lucide Vue 圖示
+// 使用完整且無歧義的名詞匯入 Lucide Icons
 import {
   Lock, Sparkles, LogIn, Info, TrendingUp, TrendingDown,
   Wallet, PlusCircle, PieChart as PieChartIcon, Receipt,
@@ -180,11 +172,7 @@ import {
 
 export default {
   name: 'App',
-  components: { 
-    PieChart, Lock, Sparkles, LogIn, Info, TrendingUp, TrendingDown,
-    Wallet, PlusCircle, PieChartIcon, Receipt, PenTool, Check,
-    BarChart2, Inbox, List, Loader2, Trash2
-  },
+  components: { PieChart },
   setup() {
     const user = ref(null);
     const records = ref([]);
@@ -194,7 +182,14 @@ export default {
     const expenseCategories = ref(['飲食', '交通', '購物', '娛樂', '追星']);
     const incomeCategories = ref(['薪水', '獎金/紅包', '售出回血', '其他收入']);
 
-    // 定義動態圖示模組
+    // 集中管理介面圖示
+    const icons = {
+      Lock, Sparkles, LogIn, Info, TrendingUp, TrendingDown,
+      Wallet, PlusCircle, PieChart: PieChartIcon, Receipt,
+      PenTool, Check, BarChart2, Inbox, List, Loader2, Trash2
+    };
+
+    // 集中管理分類對應圖示
     const categoryIconMap = {
       '飲食': Utensils,
       '交通': Car,
@@ -315,6 +310,7 @@ export default {
       expenseCategories,
       incomeCategories,
       form,
+      icons,
       getCategoryIcon,
       handleSignIn,
       handleSignOut,
@@ -344,7 +340,6 @@ body {
   color: #5c4d42;
 }
 
-/* Lucide Vue 元件樣式 */
 svg {
   width: 18px;
   height: 18px;
