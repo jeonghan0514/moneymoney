@@ -26,20 +26,40 @@
 
     <!-- 登入後的主要區域 -->
     <template v-else>
-      <!-- 本月概覽卡片 -->
+      <!-- 隱私開關與本月概覽卡片 -->
+      <div class="privacy-bar">
+        <button @click="togglePrivacy" class="privacy-btn">
+          <i class="fa-solid" :class="isPrivacyMode ? 'fa-eye-slash' : 'fa-eye'"></i>
+          {{ isPrivacyMode ? '顯示金額' : '隱私隱藏' }}
+        </button>
+      </div>
+
       <div class="summary-cards">
         <div class="card income">
           <span class="card-label"><i class="fa-solid fa-chart-line"></i> 本月回血</span>
-          <h3 class="card-amount">+ ${{ totalIncome }}</h3>
+          <h3 class="card-amount">
+            <span v-if="isPrivacyMode" class="diamond-mask">
+              <i class="fa-solid fa-gem"></i><i class="fa-solid fa-gem"></i><i class="fa-solid fa-gem"></i>
+            </span>
+            <span v-else>+ ${{ totalIncome }}</span>
+          </h3>
         </div>
         <div class="card expense">
           <span class="card-label"><i class="fa-solid fa-arrow-trend-down"></i> 本月腎痛</span>
-          <h3 class="card-amount">- ${{ totalExpense }}</h3>
+          <h3 class="card-amount">
+            <span v-if="isPrivacyMode" class="diamond-mask">
+              <i class="fa-solid fa-gem"></i><i class="fa-solid fa-gem"></i><i class="fa-solid fa-gem"></i>
+            </span>
+            <span v-else>- ${{ totalExpense }}</span>
+          </h3>
         </div>
         <div class="card balance">
           <span class="card-label"><i class="fa-solid fa-wallet"></i> 剩餘血量</span>
-          <h3 class="card-amount" :class="{ negative: (totalIncome - totalExpense) < 0 }">
-            ${{ totalIncome - totalExpense }}
+          <h3 class="card-amount" :class="{ negative: !isPrivacyMode && (totalIncome - totalExpense) < 0 }">
+            <span v-if="isPrivacyMode" class="diamond-mask">
+              <i class="fa-solid fa-gem"></i><i class="fa-solid fa-gem"></i><i class="fa-solid fa-gem"></i>
+            </span>
+            <span v-else>${{ totalIncome - totalExpense }}</span>
           </h3>
         </div>
       </div>
@@ -144,7 +164,12 @@
         
         <div class="advance-summary">
           <span>待收代墊款總計</span>
-          <h2 class="advance-total">${{ totalPendingAdvance.toLocaleString() }}</h2>
+          <h2 class="advance-total">
+            <span v-if="isPrivacyMode" class="diamond-mask lg">
+              <i class="fa-solid fa-gem"></i><i class="fa-solid fa-gem"></i><i class="fa-solid fa-gem"></i>
+            </span>
+            <span v-else>${{ totalPendingAdvance.toLocaleString() }}</span>
+          </h2>
         </div>
 
         <div v-if="groupedAdvanceList.length === 0" class="status-msg">
@@ -158,7 +183,14 @@
                 <span class="borrower-avatar"><i class="fa-solid fa-user"></i></span>
                 <div class="borrower-name-box">
                   <h4 class="borrower-name">{{ group.borrower }}</h4>
-                  <span class="borrower-count">小計: <strong>${{ group.total.toLocaleString() }}</strong> ({{ group.items.length }}筆)</span>
+                  <span class="borrower-count">
+                    小計: 
+                    <strong v-if="isPrivacyMode" class="diamond-mask sm">
+                      <i class="fa-solid fa-gem"></i><i class="fa-solid fa-gem"></i><i class="fa-solid fa-gem"></i>
+                    </strong>
+                    <strong v-else>${{ group.total.toLocaleString() }}</strong> 
+                    ({{ group.items.length }}筆)
+                  </span>
                 </div>
               </div>
 
@@ -179,7 +211,12 @@
                   <span class="sub-item-date">{{ item.date }}</span>
                 </div>
                 <div class="sub-item-right">
-                  <span class="sub-item-amount">${{ item.amount }}</span>
+                  <span class="sub-item-amount">
+                    <span v-if="isPrivacyMode" class="diamond-mask sm">
+                      <i class="fa-solid fa-gem"></i><i class="fa-solid fa-gem"></i><i class="fa-solid fa-gem"></i>
+                    </span>
+                    <span v-else>${{ item.amount }}</span>
+                  </span>
                   <button @click="markAsSettled(item.id)" class="mini-btn" title="單筆還款">已還</button>
                 </div>
               </li>
@@ -213,7 +250,7 @@
         <div v-if="chartMonthRecords.filter(r => r.type === 'expense').length === 0" class="status-msg">
           <i class="fa-solid fa-inbox msg-icon"></i> 該時間區間目前沒有腎痛支出紀錄喔！
         </div>
-        <PieChart v-else :records="chartMonthRecords" :customCategories="customCategoryList" />
+        <PieChart v-else :records="chartMonthRecords" :customCategories="customCategoryList" :isPrivacyMode="isPrivacyMode" />
       </div>
 
       <!-- 分頁 4：歷史紀錄明細 -->
@@ -266,7 +303,12 @@
             </div>
             <div class="item-right">
               <span class="amount-text">
-                {{ item.type === 'expense' ? '-' : '+' }}${{ item.amount }}
+                <span v-if="isPrivacyMode" class="diamond-mask sm">
+                  <i class="fa-solid fa-gem"></i><i class="fa-solid fa-gem"></i><i class="fa-solid fa-gem"></i>
+                </span>
+                <template v-else>
+                  {{ item.type === 'expense' ? '-' : '+' }}${{ item.amount }}
+                </template>
               </span>
               <button @click="deleteRecord(item.id)" class="del-btn" title="刪除">
                 <i class="fa-solid fa-trash-can"></i>
@@ -276,7 +318,7 @@
         </ul>
       </div>
 
-      <!-- 分頁 5：分類管理 (可直接輸入色號) -->
+      <!-- 分頁 5：分類管理 -->
       <div v-if="currentTab === 'categories'" class="card-box tab-content">
         <h3><i class="fa-solid fa-sliders"></i> 分類管理與設定</h3>
 
@@ -321,13 +363,13 @@
 
             <!-- 直接打色號專用區塊 -->
             <div class="form-group full-width">
-              <label>圖表代表色 (可直接輸入 HEX 色號，如 #F4A261)</label>
+              <label>圖表代表色 (可直接輸入 HEX 色號，如 #92A8D1)</label>
               <div class="color-picker-wrapper">
                 <input type="color" v-model="catForm.color" class="color-picker" />
                 <input 
                   type="text" 
                   v-model="catForm.color" 
-                  placeholder="#F4A261" 
+                  placeholder="#92A8D1" 
                   class="color-hex-input"
                   maxlength="7"
                 />
@@ -345,7 +387,7 @@
           </form>
         </div>
 
-        <!-- 所有分類一覽 (預設 + 自訂全整合) -->
+        <!-- 所有分類一覽 -->
         <div class="cat-list-section">
           <span class="section-label">目前所有可用分類一覽（點擊鉛筆按鈕即可自訂風格）：</span>
 
@@ -411,13 +453,20 @@ export default {
     const loading = ref(false);
     const currentTab = ref('form');
 
+    const isPrivacyMode = ref(localStorage.getItem('privacy_mode') === 'true');
+
+    const togglePrivacy = () => {
+      isPrivacyMode.value = !isPrivacyMode.value;
+      localStorage.setItem('privacy_mode', isPrivacyMode.value);
+    };
+
     const editingId = ref(null);
     const isEditingDefault = ref(false);
     const catForm = ref({
       name: '',
       type: 'expense',
       icon: 'fa-solid fa-wand-magic-sparkles',
-      color: '#f4a261'
+      color: '#92A8D1'
     });
 
     const availableIcons = [
@@ -458,16 +507,17 @@ export default {
       return years;
     });
 
+    // 完整的你的專屬克拉調色清單
     const defaultCategories = [
-      { name: '飲食', type: 'expense', icon: 'fa-solid fa-utensils', color: '#f4a261', isDefault: true },
-      { name: '交通', type: 'expense', icon: 'fa-solid fa-car', color: '#e76f51', isDefault: true },
-      { name: '購物', type: 'expense', icon: 'fa-solid fa-bag-shopping', color: '#e9c46a', isDefault: true },
-      { name: '娛樂', type: 'expense', icon: 'fa-solid fa-gamepad', color: '#2a9d8f', isDefault: true },
-      { name: '追星', type: 'expense', icon: 'fa-solid fa-wand-magic-sparkles', color: '#9b5de5', isDefault: true },
-      { name: '薪水', type: 'income', icon: 'fa-solid fa-money-bill-wave', color: '#519872', isDefault: true },
-      { name: '獎金/紅包', type: 'income', icon: 'fa-solid fa-gift', color: '#e76f51', isDefault: true },
-      { name: '售出回血', type: 'income', icon: 'fa-solid fa-rotate', color: '#f4a261', isDefault: true },
-      { name: '其他收入', type: 'income', icon: 'fa-solid fa-coins', color: '#2a9d8f', isDefault: true }
+      { name: '追星', type: 'expense', icon: 'fa-solid fa-wand-magic-sparkles', color: '#92A8D1', isDefault: true },
+      { name: '娛樂', type: 'expense', icon: 'fa-solid fa-gamepad', color: '#D8B4E2', isDefault: true },
+      { name: '購物', type: 'expense', icon: 'fa-solid fa-bag-shopping', color: '#B7E4C7', isDefault: true },
+      { name: '飲食', type: 'expense', icon: 'fa-solid fa-utensils', color: '#FFCCCC', isDefault: true },
+      { name: '交通', type: 'expense', icon: 'fa-solid fa-car', color: '#F3E3B6', isDefault: true },
+      { name: '薪水', type: 'income', icon: 'fa-solid fa-money-bill-wave', color: '#A8DADC', isDefault: true },
+      { name: '售出回血', type: 'income', icon: 'fa-solid fa-rotate', color: '#D8D8D8', isDefault: true },
+      { name: '獎金/紅包', type: 'income', icon: 'fa-solid fa-gift', color: '#E8A598', isDefault: true },
+      { name: '其他收入', type: 'income', icon: 'fa-solid fa-coins', color: '#E9C46A', isDefault: true }
     ];
 
     const displayAllCategories = computed(() => {
@@ -503,7 +553,7 @@ export default {
     const form = ref({
       date: new Date().toISOString().split('T')[0],
       type: 'expense',
-      category: '飲食',
+      category: '追星',
       amount: '',
       note: '',
       isAdvance: false,
@@ -571,7 +621,6 @@ export default {
     const saveCategory = async () => {
       if (!catForm.value.name.trim() || !user.value) return;
 
-      // 校正色號格式 (補上 # 號)
       let formattedColor = catForm.value.color.trim();
       if (!formattedColor.startsWith('#')) {
         formattedColor = '#' + formattedColor;
@@ -615,7 +664,7 @@ export default {
         name: cat.name,
         type: cat.type,
         icon: cat.icon,
-        color: cat.color || '#f4a261'
+        color: cat.color || '#92A8D1'
       };
     };
 
@@ -626,7 +675,7 @@ export default {
         name: '',
         type: 'expense',
         icon: 'fa-solid fa-wand-magic-sparkles',
-        color: '#f4a261'
+        color: '#92A8D1'
       };
     };
 
@@ -791,6 +840,8 @@ export default {
       displayAllCategories,
       loading,
       currentTab,
+      isPrivacyMode,
+      togglePrivacy,
       editingId,
       catForm,
       availableIcons,
@@ -844,6 +895,18 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   color: #5c4d42;
 }
+
+/* 可愛玫瑰石英粉向量鑽石遮罩 */
+.diamond-mask {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #f7cac9;
+  filter: drop-shadow(0 2px 4px rgba(247, 202, 201, 0.4));
+}
+
+.diamond-mask.lg { font-size: 24px; gap: 6px; }
+.diamond-mask.sm { font-size: 13px; gap: 3px; }
 
 .header {
   text-align: center;
@@ -926,6 +989,32 @@ body {
 
 .auth-btn.logout:hover {
   background: #ebdcc4;
+}
+
+.privacy-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
+.privacy-btn {
+  background: #fffdf7;
+  border: 1px solid #ebdcc4;
+  color: #8c7355;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.privacy-btn:hover {
+  background: #fefae0;
+  color: #785232;
 }
 
 .summary-cards {
@@ -1366,7 +1455,6 @@ body {
   margin-bottom: 14px;
 }
 
-/* 直接打色號專用樣式 */
 .color-picker-wrapper {
   display: flex;
   align-items: center;
