@@ -53,6 +53,13 @@
           <i class="fa-solid fa-circle-plus"></i> 新增紀錄
         </button>
         <button 
+          :class="['tab-btn', { active: currentTab === 'advance' }]" 
+          @click="currentTab = 'advance'"
+        >
+          <i class="fa-solid fa-hand-holding-dollar"></i> 代墊管理
+          <span v-if="pendingAdvanceCount > 0" class="badge-count">{{ pendingAdvanceCount }}</span>
+        </button>
+        <button 
           :class="['tab-btn', { active: currentTab === 'chart' }]" 
           @click="currentTab = 'chart'"
         >
@@ -104,6 +111,18 @@
             </div>
           </div>
 
+          <!-- 代墊選項 (僅支出時顯示) -->
+          <div v-if="form.type === 'expense'" class="advance-box">
+            <label class="checkbox-label">
+              <input type="checkbox" v-model="form.isAdvance" />
+              <span><i class="fa-solid fa-user-tag"></i> 這筆是幫朋友代墊的</span>
+            </label>
+            <div v-if="form.isAdvance" class="form-group margin-top-sm">
+              <label>對象 (朋友名字)</label>
+              <input type="text" v-model="form.borrower" placeholder="例如：小明、阿華" required />
+            </div>
+          </div>
+
           <div class="form-group full-width">
             <label>備註說明</label>
             <input type="text" v-model="form.note" placeholder="例：小卡、演唱會門票、周邊、吃火鍋" />
@@ -113,7 +132,45 @@
         </form>
       </div>
 
-      <!-- 分頁 2：支出圖表分析 -->
+      <!-- 分頁 2：代墊管理 (拆帳) -->
+      <div v-if="currentTab === 'advance'" class="card-box tab-content">
+        <h3><i class="fa-solid fa-hand-holding-dollar"></i> 代墊討債專區</h3>
+        
+        <div class="advance-summary">
+          <span>待收代墊款總計</span>
+          <h2 class="advance-total">${{ totalPendingAdvance.toLocaleString() }}</h2>
+        </div>
+
+        <div v-if="pendingAdvanceList.length === 0" class="status-msg">
+          <i class="fa-solid fa-circle-check msg-icon"></i> 目前沒有未結清的代墊，大家都還清囉！✨
+        </div>
+
+        <ul v-else class="record-list">
+          <li v-for="item in pendingAdvanceList" :key="item.id" class="record-item expense">
+            <div class="item-left">
+              <span class="category-badge borrower">
+                <i class="fa-solid fa-user"></i> {{ item.borrower }}
+              </span>
+              <div class="item-detail">
+                <span class="note-text">{{ cleanCategoryName(item.category) }} - {{ item.note || '未填寫備註' }}</span>
+                <span class="date-text">{{ item.date }}</span>
+              </div>
+            </div>
+
+            <div class="item-right advance-actions">
+              <span class="amount-text">${{ item.amount }}</span>
+              <button @click="copyPrompt(item)" class="action-btn copy" title="複製催帳文字">
+                <i class="fa-solid fa-copy"></i>
+              </button>
+              <button @click="markAsSettled(item.id)" class="action-btn settle" title="標記已還款">
+                已還款
+              </button>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <!-- 分頁 3：支出圖表分析 -->
       <div v-if="currentTab === 'chart'" class="card-box tab-content">
         <h3><i class="fa-solid fa-chart-simple"></i> 腎痛來源分類分析</h3>
         <div v-if="records.filter(r => r.type === 'expense').length === 0" class="status-msg">
@@ -122,11 +179,10 @@
         <PieChart v-else :records="records" />
       </div>
 
-      <!-- 分頁 3：歷史紀錄明細 -->
+      <!-- 分頁 4：歷史紀錄明細 -->
       <div v-if="currentTab === 'list'" class="card-box tab-content">
         <h3><i class="fa-solid fa-list"></i> 腎痛與回血明細</h3>
         
-        <!-- 篩選列 -->
         <div class="filter-bar">
           <div class="filter-item">
             <label><i class="fa-solid fa-calendar-days"></i> 月份</label>
@@ -153,7 +209,10 @@
                 {{ cleanCategoryName(item.category) }}
               </span>
               <div class="item-detail">
-                <span class="note-text">{{ item.note || '未填寫備註' }}</span>
+                <span class="note-text">
+                  <span v-if="item.isAdvance" class="borrower-tag">[代墊: {{ item.borrower }}]</span>
+                  {{ item.note || '未填寫備註' }}
+                </span>
                 <span class="date-text">{{ item.date }}</span>
               </div>
             </div>
@@ -181,6 +240,7 @@ import {
   addDoc, 
   getDocs, 
   deleteDoc, 
+  updateDoc,
   doc, 
   query, 
   where 
@@ -196,7 +256,6 @@ export default {
     const loading = ref(false);
     const currentTab = ref('form');
 
-    // 篩選變數（預設為當前年月，例如 "2026-09"）
     const now = new Date();
     const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     const filterMonth = ref(currentYearMonth);
@@ -210,13 +269,11 @@ export default {
       ...incomeCategories.value
     ]);
 
-    // 清除文字中的 Emoji 表情符號
     const cleanCategoryName = (category) => {
       if (!category) return '';
       return category.replace(/[\u{1F300}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim();
     };
 
-    // 定義 Font Awesome Class 對應
     const categoryIconMap = {
       '飲食': 'fa-solid fa-utensils',
       '交通': 'fa-solid fa-car',
@@ -239,7 +296,9 @@ export default {
       type: 'expense',
       category: '飲食',
       amount: '',
-      note: ''
+      note: '',
+      isAdvance: false,
+      borrower: ''
     });
 
     const handleSignIn = async () => {
@@ -291,16 +350,41 @@ export default {
           category: form.value.category,
           amount: Number(form.value.amount),
           note: form.value.note,
+          isAdvance: form.value.type === 'expense' ? form.value.isAdvance : false,
+          borrower: form.value.isAdvance ? form.value.borrower : '',
+          isSettled: false,
           createdAt: new Date()
         });
         
         form.value.amount = '';
         form.value.note = '';
+        form.value.isAdvance = false;
+        form.value.borrower = '';
         await fetchRecords();
         currentTab.value = 'list';
       } catch (error) {
         console.error('新增失敗:', error);
       }
+    };
+
+    // 標記代墊項目為「已還款」
+    const markAsSettled = async (id) => {
+      try {
+        await updateDoc(doc(db, 'personal_records', id), {
+          isSettled: true
+        });
+        await fetchRecords();
+      } catch (error) {
+        console.error('更新狀態失敗:', error);
+      }
+    };
+
+    // 複製一鍵催帳訊息
+    const copyPrompt = (item) => {
+      const text = `${item.borrower}～上次 ${item.date} (${cleanCategoryName(item.category)}${item.note ? ' - ' + item.note : ''}) 幫你代墊了 $${item.amount} 喔！再麻煩你有空轉給我，感謝啦～✨`;
+      navigator.clipboard.writeText(text).then(() => {
+        alert('✨ 催帳訊息已複製！可以直接貼到 LINE 囉～');
+      });
     };
 
     const deleteRecord = async (id) => {
@@ -313,7 +397,17 @@ export default {
       }
     };
 
-    // 計算當月總金額（受 filterMonth 影響）
+    // 代墊統計與過濾
+    const pendingAdvanceList = computed(() => {
+      return records.value.filter(r => r.isAdvance && !r.isSettled);
+    });
+
+    const pendingAdvanceCount = computed(() => pendingAdvanceList.value.length);
+
+    const totalPendingAdvance = computed(() => {
+      return pendingAdvanceList.value.reduce((sum, r) => sum + r.amount, 0);
+    });
+
     const currentMonthRecords = computed(() => {
       if (!filterMonth.value) return records.value;
       return records.value.filter(r => r.date && r.date.startsWith(filterMonth.value));
@@ -327,12 +421,9 @@ export default {
       return currentMonthRecords.value.filter(r => r.type === 'expense').reduce((sum, r) => sum + r.amount, 0);
     });
 
-    // 根據「月份」與「分類」篩選出列表資料
     const filteredRecords = computed(() => {
       return records.value.filter(r => {
-        // 月份篩選
         const matchMonth = filterMonth.value ? (r.date && r.date.startsWith(filterMonth.value)) : true;
-        // 分類篩選
         const cleanedCat = cleanCategoryName(r.category);
         const matchCat = filterCategory.value === 'ALL' ? true : (cleanedCat === filterCategory.value);
         return matchMonth && matchCat;
@@ -359,12 +450,17 @@ export default {
       incomeCategories,
       allCategories,
       filteredRecords,
+      pendingAdvanceList,
+      pendingAdvanceCount,
+      totalPendingAdvance,
       form,
       cleanCategoryName,
       getCategoryIcon,
       handleSignIn,
       handleSignOut,
       addRecord,
+      markAsSettled,
+      copyPrompt,
       deleteRecord,
       totalIncome,
       totalExpense
@@ -405,19 +501,9 @@ body {
   gap: 8px;
 }
 
-.header-icon {
-  font-size: 22px;
-  color: #785232;
-}
-
-.sub-icon {
-  font-size: 13px;
-  color: #d4a373;
-}
-
-.msg-icon {
-  margin-right: 6px;
-}
+.header-icon { font-size: 22px; color: #785232; }
+.sub-icon { font-size: 13px; color: #d4a373; }
+.msg-icon { margin-right: 6px; }
 
 .subtitle {
   margin-top: 6px;
@@ -523,14 +609,15 @@ body {
   border: none;
   background: transparent;
   color: #8c7355;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: bold;
   border-radius: 10px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 4px;
+  position: relative;
   transition: all 0.2s ease;
 }
 
@@ -538,6 +625,15 @@ body {
   background: #ffffff;
   color: #785232;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.badge-count {
+  background: #e76f51;
+  color: white;
+  border-radius: 10px;
+  padding: 1px 6px;
+  font-size: 10px;
+  margin-left: 2px;
 }
 
 .card-box {
@@ -559,7 +655,82 @@ body {
   gap: 8px;
 }
 
-/* 篩選區塊樣式 */
+/* 代墊區域特有樣式 */
+.advance-box {
+  background: #fffdf9;
+  border: 1px dashed #e9c46a;
+  padding: 12px;
+  border-radius: 12px;
+  margin-bottom: 15px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #785232;
+  cursor: pointer;
+}
+
+.margin-top-sm {
+  margin-top: 10px;
+}
+
+.advance-summary {
+  background: #fefae0;
+  border: 1px solid #faedcd;
+  padding: 16px;
+  border-radius: 14px;
+  text-align: center;
+  margin-bottom: 20px;
+  color: #8c7355;
+}
+
+.advance-total {
+  margin: 6px 0 0 0;
+  color: #e76f51;
+  font-size: 28px;
+}
+
+.category-badge.borrower {
+  background: #e9c46a;
+  color: #ffffff;
+  border: none;
+}
+
+.advance-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.action-btn {
+  border: none;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.action-btn.copy {
+  background: #f4a261;
+  color: white;
+}
+
+.action-btn.settle {
+  background: #2a9d8f;
+  color: white;
+}
+
+.borrower-tag {
+  color: #e76f51;
+  font-size: 12px;
+  margin-right: 4px;
+}
+
 .filter-bar {
   display: flex;
   gap: 12px;
@@ -686,9 +857,7 @@ body {
   gap: 6px;
 }
 
-.badge-icon {
-  font-size: 13px;
-}
+.badge-icon { font-size: 13px; }
 
 .item-detail {
   display: flex;
