@@ -340,14 +340,14 @@
 
         <!-- 所有分類一覽 (預設 + 自訂全整合) -->
         <div class="cat-list-section">
-          <span class="section-label">目前所有可用分類一覽：</span>
+          <span class="section-label">目前所有可用分類一覽（點擊鉛筆按鈕即可自訂風格）：</span>
 
           <div class="cat-grid">
             <div 
               v-for="cat in displayAllCategories" 
               :key="cat.id || cat.name" 
               class="cat-card-item"
-              :class="{ editing: editingId === cat.id, default: cat.isDefault }"
+              :class="{ editing: editingId === (cat.id || 'default-' + cat.name), default: cat.isDefault }"
             >
               <div class="cat-item-left">
                 <span class="cat-icon-circle" :style="{ backgroundColor: cat.color }">
@@ -405,6 +405,7 @@ export default {
     const currentTab = ref('form');
 
     const editingId = ref(null);
+    const isEditingDefault = ref(false);
     const catForm = ref({
       name: '',
       type: 'expense',
@@ -465,7 +466,6 @@ export default {
 
     // 全量呈現列表中 (包含預設與雲端自訂)
     const displayAllCategories = computed(() => {
-      // 避免重複顯示預設分類名稱
       const customNames = customCategoryList.value.map(c => c.name);
       const filteredDefaults = defaultCategories.filter(d => !customNames.includes(d.name));
       return [...filteredDefaults, ...customCategoryList.value];
@@ -567,7 +567,8 @@ export default {
       if (!catForm.value.name.trim() || !user.value) return;
 
       try {
-        if (editingId.value) {
+        if (editingId.value && !isEditingDefault.value) {
+          // 已存在的雲端自訂分類，進行更新
           await updateDoc(doc(db, 'custom_categories', editingId.value), {
             name: catForm.value.name.trim(),
             type: catForm.value.type,
@@ -575,6 +576,7 @@ export default {
             color: catForm.value.color
           });
         } else {
+          // 新增自訂分類，或是覆蓋修改系統預設分類
           await addDoc(collection(db, 'custom_categories'), {
             uid: user.value.uid,
             name: catForm.value.name.trim(),
@@ -592,7 +594,14 @@ export default {
     };
 
     const startEditCategory = (cat) => {
-      editingId.value = cat.id || 'default-' + cat.name;
+      if (cat.isDefault) {
+        editingId.value = 'default-' + cat.name;
+        isEditingDefault.value = true;
+      } else {
+        editingId.value = cat.id;
+        isEditingDefault.value = false;
+      }
+
       catForm.value = {
         name: cat.name,
         type: cat.type,
@@ -603,6 +612,7 @@ export default {
 
     const resetCatForm = () => {
       editingId.value = null;
+      isEditingDefault.value = false;
       catForm.value = {
         name: '',
         type: 'expense',
