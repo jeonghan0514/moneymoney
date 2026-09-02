@@ -138,7 +138,7 @@
         </form>
       </div>
 
-      <!-- 分頁 2：代墊管理 (單排精緻按鈕版) -->
+      <!-- 分頁 2：代墊管理 -->
       <div v-if="currentTab === 'advance'" class="card-box tab-content">
         <h3><i class="fa-solid fa-hand-holding-dollar"></i> 代墊討債專區</h3>
         
@@ -276,7 +276,7 @@
         </ul>
       </div>
 
-      <!-- 分頁 5：分類管理 (全向量圖示可視化選擇) -->
+      <!-- 分頁 5：分類管理 (顯示全量分類：預設 + 自訂) -->
       <div v-if="currentTab === 'categories'" class="card-box tab-content">
         <h3><i class="fa-solid fa-sliders"></i> 分類管理與設定</h3>
 
@@ -284,7 +284,7 @@
         <div class="cat-editor-card">
           <span class="editor-title">
             <i class="fa-solid" :class="editingId ? 'fa-pen-to-square' : 'fa-plus-circle'"></i> 
-            {{ editingId ? '編輯分類' : '新增自訂分類' }}
+            {{ editingId ? `編輯分類 (${catForm.name})` : '新增自訂分類' }}
           </span>
 
           <form @submit.prevent="saveCategory" class="cat-form">
@@ -338,32 +338,35 @@
           </form>
         </div>
 
-        <!-- 所有分類列表 -->
+        <!-- 所有分類一覽 (預設 + 自訂全整合) -->
         <div class="cat-list-section">
-          <span class="section-label">目前分類一覽（點擊即可進行編輯或刪除）：</span>
+          <span class="section-label">目前所有可用分類一覽：</span>
 
           <div class="cat-grid">
             <div 
-              v-for="cat in customCategoryList" 
-              :key="cat.id" 
+              v-for="cat in displayAllCategories" 
+              :key="cat.id || cat.name" 
               class="cat-card-item"
-              :class="{ editing: editingId === cat.id }"
+              :class="{ editing: editingId === cat.id, default: cat.isDefault }"
             >
               <div class="cat-item-left">
                 <span class="cat-icon-circle" :style="{ backgroundColor: cat.color }">
                   <i :class="cat.icon"></i>
                 </span>
                 <div class="cat-item-meta">
-                  <span class="cat-item-name">{{ cat.name }}</span>
+                  <span class="cat-item-name">
+                    {{ cat.name }} 
+                    <span v-if="cat.isDefault" class="default-badge">系統預設</span>
+                  </span>
                   <span class="cat-item-type">{{ cat.type === 'expense' ? '支出' : '收入' }}</span>
                 </div>
               </div>
 
               <div class="cat-item-actions">
-                <button @click="startEditCategory(cat)" class="action-btn-sm edit" title="編輯">
+                <button @click="startEditCategory(cat)" class="action-btn-sm edit" title="編輯風格/圖示">
                   <i class="fa-solid fa-pen"></i>
                 </button>
-                <button @click="deleteCustomCategory(cat.id)" class="action-btn-sm del" title="刪除">
+                <button v-if="!cat.isDefault" @click="deleteCustomCategory(cat.id)" class="action-btn-sm del" title="刪除">
                   <i class="fa-solid fa-trash-can"></i>
                 </button>
               </div>
@@ -409,7 +412,6 @@ export default {
       color: '#f4a261'
     });
 
-    // 豐富的 Font Awesome 向量圖示庫 (風格全站統一)
     const availableIcons = [
       { class: 'fa-solid fa-wand-magic-sparkles', label: '追星魔法' },
       { class: 'fa-solid fa-compact-disc', label: '專輯唱片' },
@@ -448,17 +450,33 @@ export default {
       return years;
     });
 
-    const defaultExpenseCategories = ['飲食', '交通', '購物', '娛樂', '追星'];
-    const defaultIncomeCategories = ['薪水', '獎金/紅包', '售出回血', '其他收入'];
+    // 系統預設基礎分類 (完整的定義)
+    const defaultCategories = [
+      { name: '飲食', type: 'expense', icon: 'fa-solid fa-utensils', color: '#f4a261', isDefault: true },
+      { name: '交通', type: 'expense', icon: 'fa-solid fa-car', color: '#e76f51', isDefault: true },
+      { name: '購物', type: 'expense', icon: 'fa-solid fa-bag-shopping', color: '#e9c46a', isDefault: true },
+      { name: '娛樂', type: 'expense', icon: 'fa-solid fa-gamepad', color: '#2a9d8f', isDefault: true },
+      { name: '追星', type: 'expense', icon: 'fa-solid fa-wand-magic-sparkles', color: '#9b5de5', isDefault: true },
+      { name: '薪水', type: 'income', icon: 'fa-solid fa-money-bill-wave', color: '#519872', isDefault: true },
+      { name: '獎金/紅包', type: 'income', icon: 'fa-solid fa-gift', color: '#e76f51', isDefault: true },
+      { name: '售出回血', type: 'income', icon: 'fa-solid fa-rotate', color: '#f4a261', isDefault: true },
+      { name: '其他收入', type: 'income', icon: 'fa-solid fa-coins', color: '#2a9d8f', isDefault: true }
+    ];
+
+    // 全量呈現列表中 (包含預設與雲端自訂)
+    const displayAllCategories = computed(() => {
+      // 避免重複顯示預設分類名稱
+      const customNames = customCategoryList.value.map(c => c.name);
+      const filteredDefaults = defaultCategories.filter(d => !customNames.includes(d.name));
+      return [...filteredDefaults, ...customCategoryList.value];
+    });
 
     const currentExpenseCategories = computed(() => {
-      const customs = customCategoryList.value.filter(c => c.type === 'expense').map(c => c.name);
-      return [...defaultExpenseCategories, ...customs];
+      return displayAllCategories.value.filter(c => c.type === 'expense').map(c => c.name);
     });
 
     const currentIncomeCategories = computed(() => {
-      const customs = customCategoryList.value.filter(c => c.type === 'income').map(c => c.name);
-      return [...defaultIncomeCategories, ...customs];
+      return displayAllCategories.value.filter(c => c.type === 'income').map(c => c.name);
     });
 
     const allCategories = computed(() => [
@@ -471,23 +489,10 @@ export default {
       return category.replace(/[\u{1F300}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim();
     };
 
-    const categoryIconMap = {
-      '飲食': 'fa-solid fa-utensils',
-      '交通': 'fa-solid fa-car',
-      '購物': 'fa-solid fa-bag-shopping',
-      '娛樂': 'fa-solid fa-gamepad',
-      '追星': 'fa-solid fa-wand-magic-sparkles',
-      '薪水': 'fa-solid fa-money-bill-wave',
-      '獎金/紅包': 'fa-solid fa-gift',
-      '售出回血': 'fa-solid fa-rotate',
-      '其他收入': 'fa-solid fa-coins'
-    };
-
     const getCategoryIcon = (category) => {
       const cleaned = cleanCategoryName(category);
-      const customMatch = customCategoryList.value.find(c => c.name === cleaned);
-      if (customMatch) return customMatch.icon;
-      return categoryIconMap[cleaned] || 'fa-solid fa-tag';
+      const match = displayAllCategories.value.find(c => c.name === cleaned);
+      return match ? match.icon : 'fa-solid fa-tag';
     };
 
     const form = ref({
@@ -587,7 +592,7 @@ export default {
     };
 
     const startEditCategory = (cat) => {
-      editingId.value = cat.id;
+      editingId.value = cat.id || 'default-' + cat.name;
       catForm.value = {
         name: cat.name,
         type: cat.type,
@@ -764,6 +769,7 @@ export default {
       user,
       records,
       customCategoryList,
+      displayAllCategories,
       loading,
       currentTab,
       editingId,
@@ -1290,7 +1296,6 @@ body {
   gap: 6px;
 }
 
-/* 圖示選擇器網格樣式 */
 .icon-picker-grid {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
@@ -1419,6 +1424,16 @@ body {
 .cat-card-item.editing {
   border-color: #f4a261;
   background: #fefae0;
+}
+
+.default-badge {
+  font-size: 10px;
+  background: #f0e6d2;
+  color: #8c7355;
+  padding: 1px 5px;
+  border-radius: 4px;
+  margin-left: 4px;
+  font-weight: normal;
 }
 
 .cat-item-left {
