@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <!-- 圓角背景柔光漸層 -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#fdfaf2"/>
+    </linearGradient>
+
+    <!-- 17 官方應援色絕美漸層 (靜謐藍 -> 玫瑰石英粉) -->
+    <linearGradient id="diamondGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#92A8D1"/>
+      <stop offset="50%" stop-color="#B5A6C9"/>
+      <stop offset="100%" stop-color="#F7CAC9"/>
+    </linearGradient>
+
+    <!-- 頂部晶透高光漸層 -->
+    <linearGradient id="shineGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- App 背景底牌 -->
+  <rect width="512" height="512" rx="115" fill="url(#bgGrad)"/>
+  <rect width="504" height="504" x="4" y="4" rx="111" fill="none" stroke="#f3e9d2" stroke-width="4"/>
+
+  <!-- 經典標準切割克拉鑽石 💎 -->
+  <g transform="translate(0, 8)">
+    <!-- 鑽石主體 (17 漸層) -->
+    <polygon points="170,140 342,140 430,230 256,410 82,230" fill="url(#diamondGrad)"/>
+
+    <!-- 經典台面 (Table Top) 高光切面 -->
+    <polygon points="205,140 307,140 330,190 182,190" fill="url(#shineGrad)"/>
+
+    <!-- 冠部切面線條 (Crown Facets) -->
+    <polygon points="170,140 205,140 182,190 82,230" fill="#ffffff" fill-opacity="0.25"/>
+    <polygon points="342,140 307,140 330,190 430,230" fill="#ffffff" fill-opacity="0.15"/>
+    <polygon points="205,140 307,140 256,190" fill="#ffffff" fill-opacity="0.3"/>
+
+    <!-- 亭部下切面陰影與折射光 (Pavilion Facets) -->
+    <polygon points="82,230 182,190 256,410" fill="#7d95c2" fill-opacity="0.35"/>
+    <polygon points="182,190 330,190 256,410" fill="#ffffff" fill-opacity="0.2"/>
+    <polygon points="330,190 430,230 256,410" fill="#e8b1b0" fill-opacity="0.4"/>
+
+    <!-- 鑽石輪廓外框線（增加精細度） -->
+    <polygon points="170,140 342,140 430,230 256,410 82,230" fill="none" stroke="#ffffff" stroke-width="3" stroke-opacity="0.6"/>
+    <line x1="182" y1="190" x2="330" y2="190" stroke="#ffffff" stroke-width="2.5" stroke-opacity="0.5"/>
+    <line x1="205" y1="140" x2="182" y2="190" stroke="#ffffff" stroke-width="2.5" stroke-opacity="0.5"/>
+    <line x1="307" y1="140" x2="330" y2="190" stroke="#ffffff" stroke-width="2.5" stroke-opacity="0.5"/>
+    <line x1="182" y1="190" x2="256" y2="410" stroke="#ffffff" stroke-width="2.5" stroke-opacity="0.4"/>
+    <line x1="330" y1="190" x2="256" y2="410" stroke="#ffffff" stroke-width="2.5" stroke-opacity="0.4"/>
+
+    <!-- 追星亮晶晶四角星芒 ✨ -->
+    <!-- 左上金色小星芒 -->
+    <path d="M105,115 Q105,130 90,130 Q105,130 105,145 Q105,130 120,130 Q105,130 105,115 Z" fill="#E9C46A"/>
+    <!-- 右下靜謐藍星芒 -->
+    <path d="M405,320 Q405,338 387,338 Q405,338 405,356 Q405,338 423,338 Q405,338 405,320 Z" fill="#92A8D1"/>
+    <!-- 右上粉紅圓光點 -->
+    <circle cx="410" cy="125" r="7" fill="#F7CAC9"/>
+  </g>
+</svg>
