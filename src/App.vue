@@ -1,10 +1,10 @@
 <template>
   <div class="finance-container">
+    <!-- 頂部標題與用戶狀態 -->
     <div class="header">
       <h2>🔒 我的私人記帳本</h2>
       <p class="subtitle">紀錄每一筆小美好與追星基金 🧁✨</p>
       
-      <!-- 登入 / 登出 區塊 -->
       <div class="user-bar">
         <div v-if="user" class="user-info">
           <img :src="user.photoURL" alt="avatar" class="avatar" />
@@ -17,14 +17,14 @@
       </div>
     </div>
 
-    <!-- 尚未登入時提示 -->
+    <!-- 尚未登入提示 -->
     <div v-if="!user" class="card-box status-msg">
       <p>💡 請先點擊上方按鈕登入 Google 帳號，即可跨裝置同步你的記帳紀錄喔！</p>
     </div>
 
-    <!-- 登入後才顯示主要功能 -->
+    <!-- 登入後的主要區域 -->
     <template v-else>
-      <!-- 本月概覽卡片 -->
+      <!-- 本月概覽卡片（常駐頂部） -->
       <div class="summary-cards">
         <div class="card income">
           <span class="card-label">本月收入 💰</span>
@@ -42,14 +42,30 @@
         </div>
       </div>
 
-      <!-- 支出比例圓餅圖分析 -->
-      <div class="card-box chart-card" v-if="records.filter(r => r.type === 'expense').length > 0">
-        <h3>📊 支出分析圓餅圖</h3>
-        <PieChart :records="records" />
+      <!-- 智能分頁選單（Tabs） -->
+      <div class="tab-nav">
+        <button 
+          :class="['tab-btn', { active: currentTab === 'form' }]" 
+          @click="currentTab = 'form'"
+        >
+          ✍️ 新增紀錄
+        </button>
+        <button 
+          :class="['tab-btn', { active: currentTab === 'chart' }]" 
+          @click="currentTab = 'chart'"
+        >
+          📊 圖表分析
+        </button>
+        <button 
+          :class="['tab-btn', { active: currentTab === 'list' }]" 
+          @click="currentTab = 'list'"
+        >
+          📜 歷史明細
+        </button>
       </div>
 
-      <!-- 新增記帳表單 -->
-      <div class="card-box form-card">
+      <!-- 分頁 1：新增記帳表單 -->
+      <div v-if="currentTab === 'form'" class="card-box tab-content">
         <h3>✍️ 新增一筆紀錄</h3>
         <form @submit.prevent="addRecord" class="finance-form">
           <div class="form-row">
@@ -95,9 +111,18 @@
         </form>
       </div>
 
-      <!-- 近期紀錄清單 -->
-      <div class="card-box list-card">
-        <h3>📜 收支紀錄</h3>
+      <!-- 分頁 2：支出圖表分析 -->
+      <div v-if="currentTab === 'chart'" class="card-box tab-content">
+        <h3>📊 支出分類比例分析</h3>
+        <div v-if="records.filter(r => r.type === 'expense').length === 0" class="status-msg">
+          目前還沒有支出紀錄，無法生成圖表喔～ 🌱
+        </div>
+        <PieChart v-else :records="records" />
+      </div>
+
+      <!-- 分頁 3：歷史紀錄明細 -->
+      <div v-if="currentTab === 'list'" class="card-box tab-content">
+        <h3>📜 收支紀錄明細</h3>
         <div v-if="loading" class="status-msg">資料載入中... ⏳</div>
         <div v-else-if="records.length === 0" class="status-msg">目前還沒有紀錄喔！快來上記第一筆吧～ 🌱</div>
         <ul v-else class="record-list">
@@ -133,7 +158,7 @@ import {
   deleteDoc, 
   doc, 
   query, 
-  where
+  where 
 } from 'firebase/firestore';
 import PieChart from './components/PieChart.vue';
 
@@ -144,6 +169,9 @@ export default {
     const user = ref(null);
     const records = ref([]);
     const loading = ref(false);
+    
+    // 當前選中的頁籤：'form' (表單), 'chart' (圖表), 'list' (明細)
+    const currentTab = ref('form');
 
     const expenseCategories = ref(['🍱 飲食', '🚗 交通', '🛍️ 購物', '🎮 娛樂', '💎 追隨']);
     const incomeCategories = ref(['💵 薪水收入', '🎁 紅包/獎金', '🔄 售出回血', '✨ 其他收入']);
@@ -187,7 +215,6 @@ export default {
           list.push({ id: docSnap.id, ...docSnap.data() });
         });
         
-        // 前端自動按日期倒序
         records.value = list.sort((a, b) => new Date(b.date) - new Date(a.date));
       } catch (error) {
         console.error('讀取紀錄失敗:', error);
@@ -212,6 +239,9 @@ export default {
         form.value.amount = '';
         form.value.note = '';
         await fetchRecords();
+        
+        // 儲存成功後自動切換到「歷史明細」頁籤，方便查看新紀錄
+        currentTab.value = 'list';
       } catch (error) {
         console.error('新增失敗:', error);
       }
@@ -248,6 +278,7 @@ export default {
       user,
       records,
       loading,
+      currentTab,
       expenseCategories,
       incomeCategories,
       form,
@@ -281,7 +312,7 @@ body {
 
 .header {
   text-align: center;
-  margin-bottom: 25px;
+  margin-bottom: 20px;
 }
 
 .header h2 {
@@ -343,7 +374,7 @@ body {
 .summary-cards {
   display: flex;
   gap: 12px;
-  margin-bottom: 25px;
+  margin-bottom: 20px;
 }
 
 .card {
@@ -372,6 +403,35 @@ body {
 .card.income .card-amount { color: #519872; }
 .card.expense .card-amount { color: #d96b68; }
 .card.balance .card-amount { color: #785232; }
+
+/* 頁籤選單樣式 */
+.tab-nav {
+  display: flex;
+  background: #f3e9d2;
+  border-radius: 14px;
+  padding: 4px;
+  margin-bottom: 20px;
+  gap: 4px;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 10px 0;
+  border: none;
+  background: transparent;
+  color: #8c7355;
+  font-size: 14px;
+  font-weight: bold;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tab-btn.active {
+  background: #ffffff;
+  color: #785232;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
 
 .card-box {
   background: #ffffff;
