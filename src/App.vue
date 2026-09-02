@@ -8,7 +8,7 @@
       <div class="user-bar">
         <div v-if="user" class="user-info">
           <img :src="user.photoURL" alt="avatar" class="avatar" />
-          <span>{{ user.displayName }}</span>
+          <span class="user-name">{{ user.displayName }}</span>
           <button @click="handleSignOut" class="auth-btn logout">登出</button>
         </div>
         <div v-else>
@@ -167,7 +167,7 @@
               <button @click="copyGroupPrompt(group)" class="action-btn copy full">
                 <i class="fa-solid fa-copy"></i> 複製清單給 {{ group.borrower }}
               </button>
-              <button @click="settleAllForBorrower(group)" class="action-btn settle full">
+              <button @click="settleAllForBorrower(group)" class="action-btn settle-all full">
                 <i class="fa-solid fa-check-double"></i> 一鍵全部還清
               </button>
             </div>
@@ -439,7 +439,6 @@ export default {
       }
     };
 
-    // 一鍵還清某位朋友的所有代墊
     const settleAllForBorrower = async (group) => {
       if (!confirm(`確定 ${group.borrower} 已經還清全部的 $${group.total} 嗎？`)) return;
       try {
@@ -453,7 +452,6 @@ export default {
       }
     };
 
-    // 複製該位朋友的所有代墊清單文字
     const copyGroupPrompt = (group) => {
       const details = group.items.map(item => 
         `• ${item.date} ${cleanCategoryName(item.category)}${item.note ? ' (' + item.note + ')' : ''}: $${item.amount}`
@@ -486,7 +484,6 @@ export default {
       return pendingAdvanceList.value.reduce((sum, r) => sum + r.amount, 0);
     });
 
-    // 將未結清代墊依「人名 (Borrower)」進行分組
     const groupedAdvanceList = computed(() => {
       const groups = {};
       pendingAdvanceList.value.forEach(item => {
@@ -639,6 +636,12 @@ body {
   border: 1px solid #f3e9d2;
 }
 
+.user-name {
+  color: #785232;
+  font-weight: 600;
+  font-size: 13px;
+}
+
 .avatar {
   width: 28px;
   height: 28px;
@@ -664,10 +667,15 @@ body {
 }
 
 .auth-btn.logout {
-  background: #e9ecef;
-  color: #6c757d;
+  background: #f0e6d2;
+  color: #8c7355;
   padding: 4px 10px;
   font-size: 12px;
+  transition: background 0.2s;
+}
+
+.auth-btn.logout:hover {
+  background: #ebdcc4;
 }
 
 .summary-cards {
@@ -805,7 +813,7 @@ body {
   font-size: 28px;
 }
 
-/* 人物卡片分組樣式 */
+/* 人物卡片分組奶油莫蘭迪配色 */
 .borrower-group-list {
   display: flex;
   flex-direction: column;
@@ -834,7 +842,7 @@ body {
 }
 
 .borrower-avatar {
-  background: #e9c46a;
+  background: #ddb892;
   color: white;
   width: 36px;
   height: 36px;
@@ -869,7 +877,7 @@ body {
 .borrower-total-amount {
   font-size: 18px;
   font-weight: bold;
-  color: #e76f51;
+  color: #d96b68;
 }
 
 .borrower-card-actions {
@@ -878,11 +886,32 @@ body {
   margin-bottom: 12px;
 }
 
-.action-btn.full {
-  flex: 1;
-  padding: 8px;
+.action-btn {
+  border: none;
+  padding: 8px 12px;
   border-radius: 10px;
   font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.action-btn:hover {
+  opacity: 0.9;
+}
+
+.action-btn.copy {
+  background: #f4a261;
+  color: white;
+}
+
+.action-btn.settle-all {
+  background: #b5838d;
+  color: white;
+}
+
+.action-btn.full {
+  flex: 1;
 }
 
 .borrower-item-list {
@@ -934,13 +963,19 @@ body {
 }
 
 .mini-btn {
-  background: #2a9d8f;
+  background: #519872;
   color: white;
   border: none;
-  border-radius: 6px;
-  padding: 3px 8px;
+  border-radius: 8px;
+  padding: 4px 10px;
   font-size: 11px;
+  font-weight: bold;
   cursor: pointer;
+  transition: background 0.2s;
+}
+
+.mini-btn:hover {
+  background: #3b7053;
 }
 
 .borrower-tag {
@@ -1113,7 +1148,7 @@ body {
 .del-btn {
   background: none;
   border: none;
-  color: #c9ada7;
+  color: #d8c3b1;
   font-size: 15px;
   cursor: pointer;
   padding: 4px;
