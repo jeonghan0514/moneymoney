@@ -132,7 +132,7 @@
         </form>
       </div>
 
-      <!-- 分頁 2：代墊管理 (拆帳) -->
+      <!-- 分頁 2：代墊管理 (按人物卡片分組) -->
       <div v-if="currentTab === 'advance'" class="card-box tab-content">
         <h3><i class="fa-solid fa-hand-holding-dollar"></i> 代墊討債專區</h3>
         
@@ -141,40 +141,58 @@
           <h2 class="advance-total">${{ totalPendingAdvance.toLocaleString() }}</h2>
         </div>
 
-        <div v-if="pendingAdvanceList.length === 0" class="status-msg">
+        <div v-if="groupedAdvanceList.length === 0" class="status-msg">
           <i class="fa-solid fa-circle-check msg-icon"></i> 目前沒有未結清的代墊，大家都還清囉！✨
         </div>
 
-        <ul v-else class="record-list">
-          <li v-for="item in pendingAdvanceList" :key="item.id" class="record-item expense">
-            <div class="item-left">
-              <span class="category-badge borrower">
-                <i class="fa-solid fa-user"></i> {{ item.borrower }}
-              </span>
-              <div class="item-detail">
-                <span class="note-text">{{ cleanCategoryName(item.category) }} - {{ item.note || '未填寫備註' }}</span>
-                <span class="date-text">{{ item.date }}</span>
+        <div v-else class="borrower-group-list">
+          <!-- 每位朋友一張卡片 -->
+          <div v-for="group in groupedAdvanceList" :key="group.borrower" class="borrower-card">
+            <div class="borrower-card-header">
+              <div class="borrower-info">
+                <span class="borrower-avatar"><i class="fa-solid fa-user"></i></span>
+                <div class="borrower-name-box">
+                  <h4 class="borrower-name">{{ group.borrower }}</h4>
+                  <span class="borrower-count">共 {{ group.items.length }} 筆待結算</span>
+                </div>
+              </div>
+              <div class="borrower-total-box">
+                <span class="borrower-total-label">欠款小計</span>
+                <span class="borrower-total-amount">${{ group.total.toLocaleString() }}</span>
               </div>
             </div>
 
-            <div class="item-right advance-actions">
-              <span class="amount-text">${{ item.amount }}</span>
-              <button @click="copyPrompt(item)" class="action-btn copy" title="複製催帳文字">
-                <i class="fa-solid fa-copy"></i>
+            <!-- 操作按鈕區 -->
+            <div class="borrower-card-actions">
+              <button @click="copyGroupPrompt(group)" class="action-btn copy full">
+                <i class="fa-solid fa-copy"></i> 複製清單給 {{ group.borrower }}
               </button>
-              <button @click="markAsSettled(item.id)" class="action-btn settle" title="標記已還款">
-                已還款
+              <button @click="settleAllForBorrower(group)" class="action-btn settle full">
+                <i class="fa-solid fa-check-double"></i> 一鍵全部還清
               </button>
             </div>
-          </li>
-        </ul>
+
+            <!-- 細項展開清單 -->
+            <ul class="borrower-item-list">
+              <li v-for="item in group.items" :key="item.id" class="borrower-sub-item">
+                <div class="sub-item-left">
+                  <span class="sub-item-note">{{ cleanCategoryName(item.category) }} - {{ item.note || '未填寫備註' }}</span>
+                  <span class="sub-item-date">{{ item.date }}</span>
+                </div>
+                <div class="sub-item-right">
+                  <span class="sub-item-amount">${{ item.amount }}</span>
+                  <button @click="markAsSettled(item.id)" class="mini-btn" title="單筆還款">已還</button>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
       </div>
 
       <!-- 分頁 3：支出圖表分析 -->
       <div v-if="currentTab === 'chart'" class="card-box tab-content">
         <h3><i class="fa-solid fa-chart-simple"></i> 腎痛來源分類分析</h3>
         
-        <!-- 年月雙選單篩選區 -->
         <div class="filter-bar">
           <div class="filter-item">
             <label><i class="fa-solid fa-calendar"></i> 年份</label>
@@ -203,7 +221,6 @@
       <div v-if="currentTab === 'list'" class="card-box tab-content">
         <h3><i class="fa-solid fa-list"></i> 腎痛與回血明細</h3>
         
-        <!-- 三重選單篩選區：年份 + 月份 + 分類 -->
         <div class="filter-bar grid-3">
           <div class="filter-item">
             <label><i class="fa-solid fa-calendar"></i> 年份</label>
@@ -288,17 +305,14 @@ export default {
     const loading = ref(false);
     const currentTab = ref('form');
 
-    // 取得當前年月
     const now = new Date();
     const currentYear = String(now.getFullYear());
     const currentMonthStr = String(now.getMonth() + 1).padStart(2, '0');
 
-    // 篩選狀態：年份與月份選單
     const filterYear = ref(currentYear);
     const filterMonthSelect = ref(currentMonthStr);
     const filterCategory = ref('ALL');
 
-    // 可選年份選單（包含前後幾年）
     const yearOptions = computed(() => {
       const years = [];
       const y = new Date().getFullYear();
@@ -398,7 +412,7 @@ export default {
           amount: Number(form.value.amount),
           note: form.value.note,
           isAdvance: form.value.type === 'expense' ? form.value.isAdvance : false,
-          borrower: form.value.isAdvance ? form.value.borrower : '',
+          borrower: form.value.isAdvance ? form.value.borrower.trim() : '',
           isSettled: false,
           createdAt: new Date()
         });
@@ -425,10 +439,30 @@ export default {
       }
     };
 
-    const copyPrompt = (item) => {
-      const text = `${item.borrower}～上次 ${item.date} (${cleanCategoryName(item.category)}${item.note ? ' - ' + item.note : ''}) 幫你代墊了 $${item.amount} 喔！再麻煩你有空轉給我，感謝啦～✨`;
+    // 一鍵還清某位朋友的所有代墊
+    const settleAllForBorrower = async (group) => {
+      if (!confirm(`確定 ${group.borrower} 已經還清全部的 $${group.total} 嗎？`)) return;
+      try {
+        const promises = group.items.map(item => 
+          updateDoc(doc(db, 'personal_records', item.id), { isSettled: true })
+        );
+        await Promise.all(promises);
+        await fetchRecords();
+      } catch (error) {
+        console.error('批量更新失敗:', error);
+      }
+    };
+
+    // 複製該位朋友的所有代墊清單文字
+    const copyGroupPrompt = (group) => {
+      const details = group.items.map(item => 
+        `• ${item.date} ${cleanCategoryName(item.category)}${item.note ? ' (' + item.note + ')' : ''}: $${item.amount}`
+      ).join('\n');
+
+      const text = `${group.borrower}～上次幫你代墊的項目如下：\n${details}\n\n👉 總共是 $${group.total} 喔！再麻煩你有空轉給我，感謝啦～✨`;
+      
       navigator.clipboard.writeText(text).then(() => {
-        alert('✨ 催帳訊息已複製！可以直接貼到 LINE 囉～');
+        alert(`✨ 已複製給 ${group.borrower} 的完整催帳訊息！可以直接貼到 LINE 囉～`);
       });
     };
 
@@ -452,7 +486,24 @@ export default {
       return pendingAdvanceList.value.reduce((sum, r) => sum + r.amount, 0);
     });
 
-    // 判斷日期是否匹配當前選中的年份與月份
+    // 將未結清代墊依「人名 (Borrower)」進行分組
+    const groupedAdvanceList = computed(() => {
+      const groups = {};
+      pendingAdvanceList.value.forEach(item => {
+        const name = item.borrower || '未具名朋友';
+        if (!groups[name]) {
+          groups[name] = {
+            borrower: name,
+            total: 0,
+            items: []
+          };
+        }
+        groups[name].items.push(item);
+        groups[name].total += item.amount;
+      });
+      return Object.values(groups);
+    });
+
     const isDateMatch = (dateStr) => {
       if (!dateStr) return false;
       const targetPrefix = filterMonthSelect.value === 'ALL' 
@@ -511,6 +562,7 @@ export default {
       pendingAdvanceList,
       pendingAdvanceCount,
       totalPendingAdvance,
+      groupedAdvanceList,
       chartMonthRecords,
       form,
       cleanCategoryName,
@@ -519,7 +571,8 @@ export default {
       handleSignOut,
       addRecord,
       markAsSettled,
-      copyPrompt,
+      settleAllForBorrower,
+      copyGroupPrompt,
       deleteRecord,
       totalIncome,
       totalExpense
@@ -752,35 +805,142 @@ body {
   font-size: 28px;
 }
 
-.category-badge.borrower {
-  background: #e9c46a;
-  color: #ffffff;
-  border: none;
+/* 人物卡片分組樣式 */
+.borrower-group-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
-.advance-actions {
+.borrower-card {
+  background: #fffdf9;
+  border: 1px solid #f3e9d2;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 4px 12px rgba(212, 184, 150, 0.08);
+}
+
+.borrower-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.borrower-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.borrower-avatar {
+  background: #e9c46a;
+  color: white;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.borrower-name {
+  margin: 0;
+  font-size: 16px;
+  color: #5c4d42;
+}
+
+.borrower-count {
+  font-size: 12px;
+  color: #a08369;
+}
+
+.borrower-total-box {
+  text-align: right;
+}
+
+.borrower-total-label {
+  display: block;
+  font-size: 11px;
+  color: #8c7355;
+}
+
+.borrower-total-amount {
+  font-size: 18px;
+  font-weight: bold;
+  color: #e76f51;
+}
+
+.borrower-card-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.action-btn.full {
+  flex: 1;
+  padding: 8px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.borrower-item-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border-top: 1px dashed #f3e9d2;
+  padding-top: 10px;
+}
+
+.borrower-sub-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #f7f1e3;
+}
+
+.borrower-sub-item:last-child {
+  border-bottom: none;
+}
+
+.sub-item-left {
+  display: flex;
+  flex-direction: column;
+}
+
+.sub-item-note {
+  font-size: 13px;
+  font-weight: 600;
+  color: #5c4d42;
+}
+
+.sub-item-date {
+  font-size: 11px;
+  color: #b09a85;
+}
+
+.sub-item-right {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.action-btn {
-  border: none;
-  padding: 6px 10px;
-  border-radius: 8px;
-  font-size: 12px;
+.sub-item-amount {
+  font-size: 14px;
   font-weight: bold;
-  cursor: pointer;
+  color: #d96b68;
 }
 
-.action-btn.copy {
-  background: #f4a261;
-  color: white;
-}
-
-.action-btn.settle {
+.mini-btn {
   background: #2a9d8f;
   color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 11px;
+  cursor: pointer;
 }
 
 .borrower-tag {
@@ -789,7 +949,6 @@ body {
   margin-right: 4px;
 }
 
-/* 改良版多選單區塊 */
 .filter-bar {
   display: flex;
   gap: 10px;
@@ -800,9 +959,7 @@ body {
   margin-bottom: 18px;
 }
 
-.filter-bar.grid-3 .filter-item {
-  flex: 1;
-}
+.filter-bar.grid-3 .filter-item { flex: 1; }
 
 .filter-item {
   flex: 1;
