@@ -6,13 +6,13 @@
     
     <title>腎痛紀錄</title>
 
-    <link rel="manifest" href="/manifest.json" />
+    <link rel="manifest" href="./manifest.json" />
 
-    <!-- 手機 iOS 主畫面圖示 (抓取專案裡的信用卡 PNG) -->
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <link rel="apple-touch-icon-precomposed" href="/apple-touch-icon.png" />
+    <!-- 改用相對路徑（./），解決 GitHub Pages 找不到圖的問題 -->
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+    <link rel="apple-touch-icon-precomposed" href="./apple-touch-icon.png" />
 
-    <!-- 電腦瀏覽器頁籤圖示 (使用絕對穩定的線上信用卡的圖示，保證電腦看絕不消失！) -->
+    <!-- 瀏覽器頁籤圖示 -->
     <link rel="icon" type="image/png" href="https://img.icons8.com/color/32/bank-cardback.png" />
 
     <!-- Font Awesome 圖示庫 -->
@@ -23,6 +23,6 @@
   </head>
   <body>
     <div id="app"></div>
-    <script type="module" src="/src/main.js"></script>
+    <script type="module" src="./src/main.js"></script>
   </body>
 </html>
