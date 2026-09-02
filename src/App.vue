@@ -63,13 +63,19 @@
           :class="['tab-btn', { active: currentTab === 'chart' }]" 
           @click="currentTab = 'chart'"
         >
-          <i class="fa-solid fa-chart-pie"></i> 腎痛分析
+          <i class="fa-solid fa-chart-pie"></i> 分析
         </button>
         <button 
           :class="['tab-btn', { active: currentTab === 'list' }]" 
           @click="currentTab = 'list'"
         >
-          <i class="fa-solid fa-receipt"></i> 歷史明細
+          <i class="fa-solid fa-receipt"></i> 明細
+        </button>
+        <button 
+          :class="['tab-btn', { active: currentTab === 'categories' }]" 
+          @click="currentTab = 'categories'"
+        >
+          <i class="fa-solid fa-sliders"></i> 分類
         </button>
       </div>
 
@@ -94,12 +100,7 @@
 
           <div class="form-row">
             <div class="form-group">
-              <div class="label-with-btn">
-                <label>分類</label>
-                <button type="button" @click="showCategoryModal = true" class="text-link-btn">
-                  <i class="fa-solid fa-gear"></i> 管理分類
-                </button>
-              </div>
+              <label>分類</label>
               <select v-model="form.category">
                 <template v-if="form.type === 'expense'">
                   <option v-for="cat in currentExpenseCategories" :key="cat" :value="cat">{{ cat }}</option>
@@ -275,47 +276,97 @@
         </ul>
       </div>
 
-      <!-- 自訂分類管理彈窗 (Modal) -->
-      <div v-if="showCategoryModal" class="modal-overlay" @click.self="showCategoryModal = false">
-        <div class="modal-card">
-          <div class="modal-header">
-            <h4><i class="fa-solid fa-tags"></i> 自訂分類管理</h4>
-            <button @click="showCategoryModal = false" class="close-btn">&times;</button>
-          </div>
+      <!-- 分頁 5：分類管理 (與全站美學完美結合的獨立分頁) -->
+      <div v-if="currentTab === 'categories'" class="card-box tab-content">
+        <h3><i class="fa-solid fa-sliders"></i> 分類管理與設定</h3>
 
-          <div class="modal-body">
-            <!-- 新增分類表單 -->
-            <form @submit.prevent="addCustomCategory" class="add-cat-form">
-              <div class="form-row">
-                <input type="text" v-model="newCat.name" placeholder="分類名稱 (如: 貓咪)" required />
-                <select v-model="newCat.type">
-                  <option value="expense">支出</option>
-                  <option value="income">收入</option>
+        <!-- 新增或編輯分類表單區塊 -->
+        <div class="cat-editor-card">
+          <span class="editor-title">
+            <i class="fa-solid" :class="editingId ? 'fa-pen-to-square' : 'fa-plus-circle'"></i> 
+            {{ editingId ? '編輯分類' : '新增自訂分類' }}
+          </span>
+
+          <form @submit.prevent="saveCategory" class="cat-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label>分類名稱</label>
+                <input type="text" v-model="catForm.name" placeholder="例如：課金、美妝、周邊" required />
+              </div>
+              <div class="form-group">
+                <label>收支類型</label>
+                <select v-model="catForm.type">
+                  <option value="expense">支出 (腎痛)</option>
+                  <option value="income">收入 (回血)</option>
                 </select>
               </div>
-              <div class="form-row margin-top-xs">
-                <select v-model="newCat.icon">
+            </div>
+
+            <div class="form-row align-center">
+              <div class="form-group">
+                <label>選擇圖示</label>
+                <select v-model="catForm.icon">
                   <option value="fa-solid fa-tag">🏷️ 預設標籤</option>
+                  <option value="fa-solid fa-wand-magic-sparkles">✨ 追星周邊</option>
+                  <option value="fa-solid fa-gamepad">🎮 遊戲課金</option>
                   <option value="fa-solid fa-cat">🐱 寵物貓咪</option>
                   <option value="fa-solid fa-shirt">👕 服飾美妝</option>
-                  <option value="fa-solid fa-house">🏠 居家居住</option>
-                  <option value="fa-solid fa-gamepad">🎮 課金遊戲</option>
-                  <option value="fa-solid fa-heart">💖 個人喜好</option>
+                  <option value="fa-solid fa-utensils">🍴 美食餐飲</option>
+                  <option value="fa-solid fa-bag-shopping">🛍️ 購物買買</option>
+                  <option value="fa-solid fa-house">🏠 居家生活</option>
+                  <option value="fa-solid fa-car">🚗 交通出行</option>
+                  <option value="fa-solid fa-coins">💰 金融理財</option>
                 </select>
-                <input type="color" v-model="newCat.color" title="選擇圖表顏色" class="color-picker" />
-                <button type="submit" class="add-cat-btn">新增</button>
               </div>
-            </form>
 
-            <!-- 已存在的自訂分類清單 -->
-            <div class="custom-cat-list">
-              <span class="cat-list-title">已新增的分類：</span>
-              <div v-if="customCategoryList.length === 0" class="empty-cat-msg">目前尚無自訂分類</div>
-              <div v-else class="cat-tags">
-                <span v-for="cat in customCategoryList" :key="cat.id" class="cat-tag-item">
-                  <i :class="cat.icon"></i> {{ cat.name }} ({{ cat.type === 'expense' ? '支出' : '收入' }})
-                  <button @click="deleteCustomCategory(cat.id)" class="del-cat-icon">&times;</button>
+              <div class="form-group">
+                <label>圖表代表色</label>
+                <div class="color-picker-wrapper">
+                  <input type="color" v-model="catForm.color" class="color-picker" />
+                  <span class="color-hex">{{ catForm.color }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="cat-form-actions">
+              <button type="submit" class="submit-btn full-btn">
+                {{ editingId ? '儲存修改' : '新增分類' }}
+              </button>
+              <button v-if="editingId" type="button" @click="resetCatForm" class="cancel-btn">
+                取消
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- 所有分類列表 -->
+        <div class="cat-list-section">
+          <span class="section-label">目前分類一覽（點擊即可進行編輯或刪除）：</span>
+
+          <div class="cat-grid">
+            <div 
+              v-for="cat in customCategoryList" 
+              :key="cat.id" 
+              class="cat-card-item"
+              :class="{ editing: editingId === cat.id }"
+            >
+              <div class="cat-item-left">
+                <span class="cat-icon-circle" :style="{ backgroundColor: cat.color }">
+                  <i :class="cat.icon"></i>
                 </span>
+                <div class="cat-item-meta">
+                  <span class="cat-item-name">{{ cat.name }}</span>
+                  <span class="cat-item-type">{{ cat.type === 'expense' ? '支出' : '收入' }}</span>
+                </div>
+              </div>
+
+              <div class="cat-item-actions">
+                <button @click="startEditCategory(cat)" class="action-btn-sm edit" title="編輯">
+                  <i class="fa-solid fa-pen"></i>
+                </button>
+                <button @click="deleteCustomCategory(cat.id)" class="action-btn-sm del" title="刪除">
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
               </div>
             </div>
           </div>
@@ -350,7 +401,14 @@ export default {
     const customCategoryList = ref([]);
     const loading = ref(false);
     const currentTab = ref('form');
-    const showCategoryModal = ref(false);
+
+    const editingId = ref(null);
+    const catForm = ref({
+      name: '',
+      type: 'expense',
+      icon: 'fa-solid fa-tag',
+      color: '#f4a261'
+    });
 
     const now = new Date();
     const currentYear = String(now.getFullYear());
@@ -372,7 +430,6 @@ export default {
     const defaultExpenseCategories = ['飲食', '交通', '購物', '娛樂', '追星'];
     const defaultIncomeCategories = ['薪水', '獎金/紅包', '售出回血', '其他收入'];
 
-    // 結合預設分類與自訂分類
     const currentExpenseCategories = computed(() => {
       const customs = customCategoryList.value.filter(c => c.type === 'expense').map(c => c.name);
       return [...defaultExpenseCategories, ...customs];
@@ -387,13 +444,6 @@ export default {
       ...currentExpenseCategories.value,
       ...currentIncomeCategories.value
     ]);
-
-    const newCat = ref({
-      name: '',
-      type: 'expense',
-      icon: 'fa-solid fa-tag',
-      color: '#e76f51'
-    });
 
     const cleanCategoryName = (category) => {
       if (!category) return '';
@@ -469,7 +519,6 @@ export default {
       }
     };
 
-    // 抓取雲端自訂分類
     const fetchCustomCategories = async () => {
       if (!user.value) return;
       try {
@@ -488,29 +537,62 @@ export default {
       }
     };
 
-    // 新增自訂分類
-    const addCustomCategory = async () => {
-      if (!newCat.value.name.trim() || !user.value) return;
+    // 新增或更新分類
+    const saveCategory = async () => {
+      if (!catForm.value.name.trim() || !user.value) return;
+
       try {
-        await addDoc(collection(db, 'custom_categories'), {
-          uid: user.value.uid,
-          name: newCat.value.name.trim(),
-          type: newCat.value.type,
-          icon: newCat.value.icon,
-          color: newCat.value.color,
-          createdAt: new Date()
-        });
-        newCat.value.name = '';
+        if (editingId.value) {
+          // 更新模式
+          await updateDoc(doc(db, 'custom_categories', editingId.value), {
+            name: catForm.value.name.trim(),
+            type: catForm.value.type,
+            icon: catForm.value.icon,
+            color: catForm.value.color
+          });
+        } else {
+          // 新增模式
+          await addDoc(collection(db, 'custom_categories'), {
+            uid: user.value.uid,
+            name: catForm.value.name.trim(),
+            type: catForm.value.type,
+            icon: catForm.value.icon,
+            color: catForm.value.color,
+            createdAt: new Date()
+          });
+        }
+        resetCatForm();
         await fetchCustomCategories();
       } catch (error) {
-        console.error('新增分類失敗:', error);
+        console.error('儲存分類失敗:', error);
       }
     };
 
-    // 刪除自訂分類
+    const startEditCategory = (cat) => {
+      editingId.value = cat.id;
+      catForm.value = {
+        name: cat.name,
+        type: cat.type,
+        icon: cat.icon,
+        color: cat.color || '#f4a261'
+      };
+    };
+
+    const resetCatForm = () => {
+      editingId.value = null;
+      catForm.value = {
+        name: '',
+        type: 'expense',
+        icon: 'fa-solid fa-tag',
+        color: '#f4a261'
+      };
+    };
+
     const deleteCustomCategory = async (id) => {
+      if (!confirm('確定要刪除這個自訂分類嗎？')) return;
       try {
         await deleteDoc(doc(db, 'custom_categories', id));
+        if (editingId.value === id) resetCatForm();
         await fetchCustomCategories();
       } catch (error) {
         console.error('刪除分類失敗:', error);
@@ -666,7 +748,8 @@ export default {
       customCategoryList,
       loading,
       currentTab,
-      showCategoryModal,
+      editingId,
+      catForm,
       filterYear,
       filterMonthSelect,
       filterCategory,
@@ -681,13 +764,14 @@ export default {
       groupedAdvanceList,
       chartMonthRecords,
       form,
-      newCat,
       cleanCategoryName,
       getCategoryIcon,
       handleSignIn,
       handleSignOut,
       addRecord,
-      addCustomCategory,
+      saveCategory,
+      startEditCategory,
+      resetCatForm,
       deleteCustomCategory,
       markAsSettled,
       settleAllForBorrower,
@@ -842,7 +926,7 @@ body {
   border-radius: 14px;
   padding: 4px;
   margin-bottom: 20px;
-  gap: 4px;
+  gap: 2px;
 }
 
 .tab-btn {
@@ -851,14 +935,14 @@ body {
   border: none;
   background: transparent;
   color: #8c7355;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: bold;
   border-radius: 10px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 3px;
   position: relative;
   transition: all 0.2s ease;
 }
@@ -873,9 +957,8 @@ body {
   background: #e76f51;
   color: white;
   border-radius: 10px;
-  padding: 1px 6px;
+  padding: 1px 5px;
   font-size: 10px;
-  margin-left: 2px;
 }
 
 .card-box {
@@ -895,22 +978,6 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.label-with-btn {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.text-link-btn {
-  background: none;
-  border: none;
-  color: #e76f51;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 0;
 }
 
 .advance-box {
@@ -1161,6 +1228,10 @@ body {
   margin-bottom: 15px;
 }
 
+.form-row.align-center {
+  align-items: center;
+}
+
 .form-group {
   flex: 1;
   display: flex;
@@ -1203,6 +1274,153 @@ body {
   justify-content: center;
   gap: 6px;
 }
+
+/* 分類管理獨立頁面樣式 */
+.cat-editor-card {
+  background: #fffdf9;
+  border: 1px solid #ebdcc4;
+  padding: 16px;
+  border-radius: 16px;
+  margin-bottom: 20px;
+}
+
+.editor-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #785232;
+  display: block;
+  margin-bottom: 14px;
+}
+
+.color-picker-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fffdf9;
+  border: 1px solid #ebdcc4;
+  padding: 6px 10px;
+  border-radius: 12px;
+}
+
+.color-picker {
+  width: 32px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.color-hex {
+  font-size: 12px;
+  font-weight: 600;
+  color: #8c7355;
+}
+
+.cat-form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.submit-btn.full-btn {
+  flex: 1;
+}
+
+.cancel-btn {
+  background: #f0e6d2;
+  color: #8c7355;
+  border: none;
+  border-radius: 14px;
+  padding: 0 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.cat-list-section {
+  border-top: 1px dashed #f3e9d2;
+  padding-top: 16px;
+}
+
+.section-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #8c7355;
+  margin-bottom: 12px;
+  display: block;
+}
+
+.cat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.cat-card-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fffdf9;
+  border: 1px solid #f3e9d2;
+  padding: 10px 12px;
+  border-radius: 12px;
+  transition: all 0.2s;
+}
+
+.cat-card-item.editing {
+  border-color: #f4a261;
+  background: #fefae0;
+}
+
+.cat-item-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cat-icon-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.cat-item-meta {
+  display: flex;
+  flex-direction: column;
+}
+
+.cat-item-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #5c4d42;
+}
+
+.cat-item-type {
+  font-size: 11px;
+  color: #a08369;
+}
+
+.cat-item-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.action-btn-sm {
+  background: none;
+  border: none;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  color: #b09a85;
+}
+
+.action-btn-sm.edit:hover { color: #f4a261; }
+.action-btn-sm.del:hover { color: #d96b68; }
 
 .status-msg {
   text-align: center;
@@ -1289,130 +1507,5 @@ body {
 
 .del-btn:hover {
   color: #d96b68;
-}
-
-/* 彈窗 Modal 樣式 */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  z-index: 999;
-}
-
-.modal-card {
-  background: #ffffff;
-  border-radius: 20px;
-  width: 100%;
-  max-width: 450px;
-  padding: 20px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid #f3e9d2;
-  padding-bottom: 10px;
-  margin-bottom: 16px;
-}
-
-.modal-header h4 {
-  margin: 0;
-  font-size: 16px;
-  color: #785232;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 22px;
-  color: #a08369;
-  cursor: pointer;
-}
-
-.add-cat-form {
-  background: #fffdf9;
-  border: 1px solid #ebdcc4;
-  padding: 12px;
-  border-radius: 12px;
-  margin-bottom: 16px;
-}
-
-.margin-top-xs {
-  margin-top: 8px;
-}
-
-.color-picker {
-  width: 40px;
-  height: 38px;
-  border: 1px solid #ebdcc4;
-  border-radius: 8px;
-  background: white;
-  cursor: pointer;
-  padding: 2px;
-}
-
-.add-cat-btn {
-  background: #f4a261;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 0 14px;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-.cat-list-title {
-  font-size: 12px;
-  font-weight: 600;
-  color: #8c7355;
-  display: block;
-  margin-bottom: 8px;
-}
-
-.empty-cat-msg {
-  font-size: 12px;
-  color: #b09a85;
-  text-align: center;
-  padding: 10px 0;
-}
-
-.cat-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.cat-tag-item {
-  background: #fefae0;
-  border: 1px solid #faedcd;
-  color: #785232;
-  padding: 4px 10px;
-  border-radius: 8px;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.del-cat-icon {
-  background: none;
-  border: none;
-  color: #d96b68;
-  font-size: 14px;
-  font-weight: bold;
-  cursor: pointer;
-  padding: 0 2px;
 }
 </style>
