@@ -1,0 +1,20 @@
+{
+  "name": "腎痛紀錄",
+  "short_name": "腎痛紀錄",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fdfaf2",
+  "theme_color": "#92A8D1",
+  "icons": [
+    {
+      "src": "https://img.icons8.com/empath-pastel/192/diamond.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://img.icons8.com/empath-pastel/512/diamond.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
