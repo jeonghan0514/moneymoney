@@ -47,11 +47,14 @@ export default {
     records: {
       type: Array,
       required: true
+    },
+    customCategories: {
+      type: Array,
+      default: () => []
     }
   },
   setup(props) {
-    // 莫蘭迪配色
-    const categoryColors = {
+    const defaultColors = {
       '飲食': '#f4a261',
       '交通': '#e76f51',
       '購物': '#e9c46a',
@@ -59,8 +62,7 @@ export default {
       '追星': '#9b5de5'
     };
 
-    // Font Awesome 圖示對應
-    const categoryIcons = {
+    const defaultIcons = {
       '飲食': 'fa-solid fa-utensils',
       '交通': 'fa-solid fa-car',
       '購物': 'fa-solid fa-bag-shopping',
@@ -68,7 +70,6 @@ export default {
       '追星': 'fa-solid fa-wand-magic-sparkles'
     };
 
-    // 移除舊資料中的 Emoji
     const cleanCategoryName = (category) => {
       if (!category) return '';
       return category.replace(/[\u{1F300}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim();
@@ -96,12 +97,18 @@ export default {
         .map(cat => {
           const amount = totals[cat];
           const percentage = ((amount / sum) * 100).toFixed(1);
+          
+          // 查找自訂分類的顏色與 Icon
+          const customItem = props.customCategories.find(c => c.name === cat);
+          const icon = customItem ? customItem.icon : (defaultIcons[cat] || 'fa-solid fa-tag');
+          const color = customItem ? customItem.color : (defaultColors[cat] || '#a08369');
+
           return {
             category: cat,
             amount,
             percentage,
-            icon: categoryIcons[cat] || 'fa-solid fa-tag',
-            color: categoryColors[cat] || '#a08369'
+            icon,
+            color
           };
         })
         .sort((a, b) => b.amount - a.amount);
