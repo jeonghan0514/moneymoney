@@ -62,7 +62,7 @@
           :class="['tab-btn', { active: currentTab === 'list' }]" 
           @click="currentTab = 'list'"
         >
-          <i class="fa-solid fa-receipt"></i> 傷痕明細
+          <i class="fa-solid fa-receipt"></i> 歷史明細
         </button>
       </div>
 
@@ -125,10 +125,28 @@
       <!-- 分頁 3：歷史紀錄明細 -->
       <div v-if="currentTab === 'list'" class="card-box tab-content">
         <h3><i class="fa-solid fa-list"></i> 腎痛與回血明細</h3>
+        
+        <!-- 篩選列 -->
+        <div class="filter-bar">
+          <div class="filter-item">
+            <label><i class="fa-solid fa-calendar-days"></i> 月份</label>
+            <input type="month" v-model="filterMonth" />
+          </div>
+          <div class="filter-item">
+            <label><i class="fa-solid fa-filter"></i> 分類</label>
+            <select v-model="filterCategory">
+              <option value="ALL">全部分類</option>
+              <option v-for="cat in allCategories" :key="cat" :value="cat">{{ cat }}</option>
+            </select>
+          </div>
+        </div>
+
         <div v-if="loading" class="status-msg"><i class="fa-solid fa-spinner fa-spin msg-icon"></i> 資料載入中...</div>
-        <div v-else-if="records.length === 0" class="status-msg"><i class="fa-solid fa-inbox msg-icon"></i> 目前還沒有紀錄，快來記第一筆吧！</div>
+        <div v-else-if="filteredRecords.length === 0" class="status-msg">
+          <i class="fa-solid fa-inbox msg-icon"></i> 沒有符合篩選條件的紀錄喔！
+        </div>
         <ul v-else class="record-list">
-          <li v-for="item in records" :key="item.id" :class="['record-item', item.type]">
+          <li v-for="item in filteredRecords" :key="item.id" :class="['record-item', item.type]">
             <div class="item-left">
               <span class="category-badge">
                 <i :class="['badge-icon', getCategoryIcon(item.category)]"></i>
@@ -178,8 +196,19 @@ export default {
     const loading = ref(false);
     const currentTab = ref('form');
 
+    // 篩選變數（預設為當前年月，例如 "2026-09"）
+    const now = new Date();
+    const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const filterMonth = ref(currentYearMonth);
+    const filterCategory = ref('ALL');
+
     const expenseCategories = ref(['飲食', '交通', '購物', '娛樂', '追星']);
     const incomeCategories = ref(['薪水', '獎金/紅包', '售出回血', '其他收入']);
+
+    const allCategories = computed(() => [
+      ...expenseCategories.value,
+      ...incomeCategories.value
+    ]);
 
     // 清除文字中的 Emoji 表情符號
     const cleanCategoryName = (category) => {
@@ -284,12 +313,30 @@ export default {
       }
     };
 
+    // 計算當月總金額（受 filterMonth 影響）
+    const currentMonthRecords = computed(() => {
+      if (!filterMonth.value) return records.value;
+      return records.value.filter(r => r.date && r.date.startsWith(filterMonth.value));
+    });
+
     const totalIncome = computed(() => {
-      return records.value.filter(r => r.type === 'income').reduce((sum, r) => sum + r.amount, 0);
+      return currentMonthRecords.value.filter(r => r.type === 'income').reduce((sum, r) => sum + r.amount, 0);
     });
 
     const totalExpense = computed(() => {
-      return records.value.filter(r => r.type === 'expense').reduce((sum, r) => sum + r.amount, 0);
+      return currentMonthRecords.value.filter(r => r.type === 'expense').reduce((sum, r) => sum + r.amount, 0);
+    });
+
+    // 根據「月份」與「分類」篩選出列表資料
+    const filteredRecords = computed(() => {
+      return records.value.filter(r => {
+        // 月份篩選
+        const matchMonth = filterMonth.value ? (r.date && r.date.startsWith(filterMonth.value)) : true;
+        // 分類篩選
+        const cleanedCat = cleanCategoryName(r.category);
+        const matchCat = filterCategory.value === 'ALL' ? true : (cleanedCat === filterCategory.value);
+        return matchMonth && matchCat;
+      });
     });
 
     onMounted(() => {
@@ -306,8 +353,12 @@ export default {
       records,
       loading,
       currentTab,
+      filterMonth,
+      filterCategory,
       expenseCategories,
       incomeCategories,
+      allCategories,
+      filteredRecords,
       form,
       cleanCategoryName,
       getCategoryIcon,
@@ -506,6 +557,43 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+/* 篩選區塊樣式 */
+.filter-bar {
+  display: flex;
+  gap: 12px;
+  background: #fffdf9;
+  border: 1px solid #f3e9d2;
+  padding: 12px;
+  border-radius: 14px;
+  margin-bottom: 18px;
+}
+
+.filter-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.filter-item label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #8c7355;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.filter-item input, .filter-item select {
+  padding: 8px 10px;
+  background: #ffffff;
+  border: 1px solid #ebdcc4;
+  border-radius: 10px;
+  font-size: 13px;
+  color: #5c4d42;
+  outline: none;
 }
 
 .form-row {
