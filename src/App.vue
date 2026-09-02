@@ -173,13 +173,12 @@ export default {
     const expenseCategories = ref(['飲食', '交通', '購物', '娛樂', '追星']);
     const incomeCategories = ref(['薪水', '獎金/紅包', '售出回血', '其他收入']);
 
-    // 定義 Font Awesome Class 對應
     const categoryIconMap = {
       '飲食': 'fa-solid fa-utensils',
       '交通': 'fa-solid fa-car',
       '購物': 'fa-solid fa-bag-shopping',
       '娛樂': 'fa-solid fa-gamepad',
-      '追星': 'fa-solid fa-sparkles',
+      '追星': 'fa-solid fa-wand-magic-sparkles',
       '薪水': 'fa-solid fa-money-bill-wave',
       '獎金/紅包': 'fa-solid fa-gift',
       '售出回血': 'fa-solid fa-rotate',
