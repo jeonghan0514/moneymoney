@@ -94,13 +94,18 @@
 
           <div class="form-row">
             <div class="form-group">
-              <label>分類</label>
+              <div class="label-with-btn">
+                <label>分類</label>
+                <button type="button" @click="showCategoryModal = true" class="text-link-btn">
+                  <i class="fa-solid fa-gear"></i> 管理分類
+                </button>
+              </div>
               <select v-model="form.category">
                 <template v-if="form.type === 'expense'">
-                  <option v-for="cat in expenseCategories" :key="cat" :value="cat">{{ cat }}</option>
+                  <option v-for="cat in currentExpenseCategories" :key="cat" :value="cat">{{ cat }}</option>
                 </template>
                 <template v-else>
-                  <option v-for="cat in incomeCategories" :key="cat" :value="cat">{{ cat }}</option>
+                  <option v-for="cat in currentIncomeCategories" :key="cat" :value="cat">{{ cat }}</option>
                 </template>
               </select>
             </div>
@@ -146,10 +151,8 @@
         </div>
 
         <div v-else class="borrower-group-list">
-          <!-- 每位朋友一張精緻卡片 -->
           <div v-for="group in groupedAdvanceList" :key="group.borrower" class="borrower-card">
             <div class="borrower-card-header">
-              <!-- 左側：人物頭像與名字 -->
               <div class="borrower-info">
                 <span class="borrower-avatar"><i class="fa-solid fa-user"></i></span>
                 <div class="borrower-name-box">
@@ -158,7 +161,6 @@
                 </div>
               </div>
 
-              <!-- 右側：同排精緻小按鈕 -->
               <div class="borrower-header-actions">
                 <button @click="copyGroupPrompt(group)" class="mini-action-btn copy" title="複製 LINE 催帳訊息">
                   <i class="fa-solid fa-copy"></i> 複製
@@ -169,7 +171,6 @@
               </div>
             </div>
 
-            <!-- 細項展開清單 -->
             <ul class="borrower-item-list">
               <li v-for="item in group.items" :key="item.id" class="borrower-sub-item">
                 <div class="sub-item-left">
@@ -211,7 +212,7 @@
         <div v-if="chartMonthRecords.filter(r => r.type === 'expense').length === 0" class="status-msg">
           <i class="fa-solid fa-inbox msg-icon"></i> 該時間區間目前沒有腎痛支出紀錄喔！
         </div>
-        <PieChart v-else :records="chartMonthRecords" />
+        <PieChart v-else :records="chartMonthRecords" :customCategories="customCategoryList" />
       </div>
 
       <!-- 分頁 4：歷史紀錄明細 -->
@@ -273,6 +274,53 @@
           </li>
         </ul>
       </div>
+
+      <!-- 自訂分類管理彈窗 (Modal) -->
+      <div v-if="showCategoryModal" class="modal-overlay" @click.self="showCategoryModal = false">
+        <div class="modal-card">
+          <div class="modal-header">
+            <h4><i class="fa-solid fa-tags"></i> 自訂分類管理</h4>
+            <button @click="showCategoryModal = false" class="close-btn">&times;</button>
+          </div>
+
+          <div class="modal-body">
+            <!-- 新增分類表單 -->
+            <form @submit.prevent="addCustomCategory" class="add-cat-form">
+              <div class="form-row">
+                <input type="text" v-model="newCat.name" placeholder="分類名稱 (如: 貓咪)" required />
+                <select v-model="newCat.type">
+                  <option value="expense">支出</option>
+                  <option value="income">收入</option>
+                </select>
+              </div>
+              <div class="form-row margin-top-xs">
+                <select v-model="newCat.icon">
+                  <option value="fa-solid fa-tag">🏷️ 預設標籤</option>
+                  <option value="fa-solid fa-cat">🐱 寵物貓咪</option>
+                  <option value="fa-solid fa-shirt">👕 服飾美妝</option>
+                  <option value="fa-solid fa-house">🏠 居家居住</option>
+                  <option value="fa-solid fa-gamepad">🎮 課金遊戲</option>
+                  <option value="fa-solid fa-heart">💖 個人喜好</option>
+                </select>
+                <input type="color" v-model="newCat.color" title="選擇圖表顏色" class="color-picker" />
+                <button type="submit" class="add-cat-btn">新增</button>
+              </div>
+            </form>
+
+            <!-- 已存在的自訂分類清單 -->
+            <div class="custom-cat-list">
+              <span class="cat-list-title">已新增的分類：</span>
+              <div v-if="customCategoryList.length === 0" class="empty-cat-msg">目前尚無自訂分類</div>
+              <div v-else class="cat-tags">
+                <span v-for="cat in customCategoryList" :key="cat.id" class="cat-tag-item">
+                  <i :class="cat.icon"></i> {{ cat.name }} ({{ cat.type === 'expense' ? '支出' : '收入' }})
+                  <button @click="deleteCustomCategory(cat.id)" class="del-cat-icon">&times;</button>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </template>
   </div>
 </template>
@@ -299,8 +347,10 @@ export default {
   setup() {
     const user = ref(null);
     const records = ref([]);
+    const customCategoryList = ref([]);
     const loading = ref(false);
     const currentTab = ref('form');
+    const showCategoryModal = ref(false);
 
     const now = new Date();
     const currentYear = String(now.getFullYear());
@@ -319,13 +369,31 @@ export default {
       return years;
     });
 
-    const expenseCategories = ref(['飲食', '交通', '購物', '娛樂', '追星']);
-    const incomeCategories = ref(['薪水', '獎金/紅包', '售出回血', '其他收入']);
+    const defaultExpenseCategories = ['飲食', '交通', '購物', '娛樂', '追星'];
+    const defaultIncomeCategories = ['薪水', '獎金/紅包', '售出回血', '其他收入'];
+
+    // 結合預設分類與自訂分類
+    const currentExpenseCategories = computed(() => {
+      const customs = customCategoryList.value.filter(c => c.type === 'expense').map(c => c.name);
+      return [...defaultExpenseCategories, ...customs];
+    });
+
+    const currentIncomeCategories = computed(() => {
+      const customs = customCategoryList.value.filter(c => c.type === 'income').map(c => c.name);
+      return [...defaultIncomeCategories, ...customs];
+    });
 
     const allCategories = computed(() => [
-      ...expenseCategories.value,
-      ...incomeCategories.value
+      ...currentExpenseCategories.value,
+      ...currentIncomeCategories.value
     ]);
+
+    const newCat = ref({
+      name: '',
+      type: 'expense',
+      icon: 'fa-solid fa-tag',
+      color: '#e76f51'
+    });
 
     const cleanCategoryName = (category) => {
       if (!category) return '';
@@ -346,6 +414,8 @@ export default {
 
     const getCategoryIcon = (category) => {
       const cleaned = cleanCategoryName(category);
+      const customMatch = customCategoryList.value.find(c => c.name === cleaned);
+      if (customMatch) return customMatch.icon;
       return categoryIconMap[cleaned] || 'fa-solid fa-tag';
     };
 
@@ -371,6 +441,7 @@ export default {
       try {
         await signOut(auth);
         records.value = [];
+        customCategoryList.value = [];
       } catch (error) {
         console.error('登出失敗:', error);
       }
@@ -395,6 +466,54 @@ export default {
         console.error('讀取紀錄失敗:', error);
       } finally {
         loading.value = false;
+      }
+    };
+
+    // 抓取雲端自訂分類
+    const fetchCustomCategories = async () => {
+      if (!user.value) return;
+      try {
+        const q = query(
+          collection(db, 'custom_categories'),
+          where('uid', '==', user.value.uid)
+        );
+        const querySnapshot = await getDocs(q);
+        const list = [];
+        querySnapshot.forEach((docSnap) => {
+          list.push({ id: docSnap.id, ...docSnap.data() });
+        });
+        customCategoryList.value = list;
+      } catch (error) {
+        console.error('讀取自訂分類失敗:', error);
+      }
+    };
+
+    // 新增自訂分類
+    const addCustomCategory = async () => {
+      if (!newCat.value.name.trim() || !user.value) return;
+      try {
+        await addDoc(collection(db, 'custom_categories'), {
+          uid: user.value.uid,
+          name: newCat.value.name.trim(),
+          type: newCat.value.type,
+          icon: newCat.value.icon,
+          color: newCat.value.color,
+          createdAt: new Date()
+        });
+        newCat.value.name = '';
+        await fetchCustomCategories();
+      } catch (error) {
+        console.error('新增分類失敗:', error);
+      }
+    };
+
+    // 刪除自訂分類
+    const deleteCustomCategory = async (id) => {
+      try {
+        await deleteDoc(doc(db, 'custom_categories', id));
+        await fetchCustomCategories();
+      } catch (error) {
+        console.error('刪除分類失敗:', error);
       }
     };
 
@@ -536,6 +655,7 @@ export default {
         user.value = currentUser;
         if (currentUser) {
           fetchRecords();
+          fetchCustomCategories();
         }
       });
     });
@@ -543,14 +663,16 @@ export default {
     return {
       user,
       records,
+      customCategoryList,
       loading,
       currentTab,
+      showCategoryModal,
       filterYear,
       filterMonthSelect,
       filterCategory,
       yearOptions,
-      expenseCategories,
-      incomeCategories,
+      currentExpenseCategories,
+      currentIncomeCategories,
       allCategories,
       filteredRecords,
       pendingAdvanceList,
@@ -559,11 +681,14 @@ export default {
       groupedAdvanceList,
       chartMonthRecords,
       form,
+      newCat,
       cleanCategoryName,
       getCategoryIcon,
       handleSignIn,
       handleSignOut,
       addRecord,
+      addCustomCategory,
+      deleteCustomCategory,
       markAsSettled,
       settleAllForBorrower,
       copyGroupPrompt,
@@ -772,6 +897,22 @@ body {
   gap: 8px;
 }
 
+.label-with-btn {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.text-link-btn {
+  background: none;
+  border: none;
+  color: #e76f51;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
 .advance-box {
   background: #fffdf9;
   border: 1px dashed #e9c46a;
@@ -810,7 +951,6 @@ body {
   font-size: 28px;
 }
 
-/* 人物卡片精緻單排樣式 */
 .borrower-group-list {
   display: flex;
   flex-direction: column;
@@ -873,7 +1013,6 @@ body {
   color: #d96b68;
 }
 
-/* 同排精緻小按鈕組 */
 .borrower-header-actions {
   display: flex;
   align-items: center;
@@ -1150,5 +1289,130 @@ body {
 
 .del-btn:hover {
   color: #d96b68;
+}
+
+/* 彈窗 Modal 樣式 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 999;
+}
+
+.modal-card {
+  background: #ffffff;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 450px;
+  padding: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #f3e9d2;
+  padding-bottom: 10px;
+  margin-bottom: 16px;
+}
+
+.modal-header h4 {
+  margin: 0;
+  font-size: 16px;
+  color: #785232;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 22px;
+  color: #a08369;
+  cursor: pointer;
+}
+
+.add-cat-form {
+  background: #fffdf9;
+  border: 1px solid #ebdcc4;
+  padding: 12px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+
+.margin-top-xs {
+  margin-top: 8px;
+}
+
+.color-picker {
+  width: 40px;
+  height: 38px;
+  border: 1px solid #ebdcc4;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  padding: 2px;
+}
+
+.add-cat-btn {
+  background: #f4a261;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0 14px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.cat-list-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #8c7355;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.empty-cat-msg {
+  font-size: 12px;
+  color: #b09a85;
+  text-align: center;
+  padding: 10px 0;
+}
+
+.cat-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cat-tag-item {
+  background: #fefae0;
+  border: 1px solid #faedcd;
+  color: #785232;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.del-cat-icon {
+  background: none;
+  border: none;
+  color: #d96b68;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0 2px;
 }
 </style>
