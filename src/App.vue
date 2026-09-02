@@ -2,8 +2,8 @@
   <div class="finance-container">
     <!-- 頂部標題與用戶狀態 -->
     <div class="header">
-      <h2><i data-lucide="lock" class="header-icon"></i> 私人記帳本</h2>
-      <p class="subtitle">紀錄每一筆小美好與追星基金 <i data-lucide="sparkles" class="sub-icon"></i></p>
+      <h2><Lock class="header-icon" /> 私人記帳本</h2>
+      <p class="subtitle">紀錄每一筆小美好與追星基金 <Sparkles class="sub-icon" /></p>
       
       <div class="user-bar">
         <div v-if="user" class="user-info">
@@ -13,7 +13,7 @@
         </div>
         <div v-else>
           <button @click="handleSignIn" class="auth-btn login">
-            <i data-lucide="log-in"></i> 使用 Google 登入雲端同步
+            <LogIn /> 使用 Google 登入雲端同步
           </button>
         </div>
       </div>
@@ -21,7 +21,7 @@
 
     <!-- 尚未登入提示 -->
     <div v-if="!user" class="card-box status-msg">
-      <p><i data-lucide="info" class="msg-icon"></i> 請先點擊上方按鈕登入 Google 帳號，即可跨裝置同步你的記帳紀錄。</p>
+      <p><Info class="msg-icon" /> 請先點擊上方按鈕登入 Google 帳號，即可跨裝置同步你的記帳紀錄。</p>
     </div>
 
     <!-- 登入後的主要區域 -->
@@ -29,15 +29,15 @@
       <!-- 本月概覽卡片 -->
       <div class="summary-cards">
         <div class="card income">
-          <span class="card-label"><i data-lucide="trending-up"></i> 本月收入</span>
+          <span class="card-label"><TrendingUp /> 本月收入</span>
           <h3 class="card-amount">+ ${{ totalIncome }}</h3>
         </div>
         <div class="card expense">
-          <span class="card-label"><i data-lucide="trending-down"></i> 本月支出</span>
+          <span class="card-label"><TrendingDown /> 本月支出</span>
           <h3 class="card-amount">- ${{ totalExpense }}</h3>
         </div>
         <div class="card balance">
-          <span class="card-label"><i data-lucide="wallet"></i> 本月結餘</span>
+          <span class="card-label"><Wallet /> 本月結餘</span>
           <h3 class="card-amount" :class="{ negative: (totalIncome - totalExpense) < 0 }">
             ${{ totalIncome - totalExpense }}
           </h3>
@@ -50,25 +50,25 @@
           :class="['tab-btn', { active: currentTab === 'form' }]" 
           @click="currentTab = 'form'"
         >
-          <i data-lucide="plus-circle"></i> 新增紀錄
+          <PlusCircle /> 新增紀錄
         </button>
         <button 
           :class="['tab-btn', { active: currentTab === 'chart' }]" 
           @click="currentTab = 'chart'"
         >
-          <i data-lucide="pie-chart"></i> 圖表分析
+          <PieChartIcon /> 圖表分析
         </button>
         <button 
           :class="['tab-btn', { active: currentTab === 'list' }]" 
           @click="currentTab = 'list'"
         >
-          <i data-lucide="receipt"></i> 歷史明細
+          <Receipt /> 歷史明細
         </button>
       </div>
 
       <!-- 分頁 1：新增記帳表單 -->
       <div v-if="currentTab === 'form'" class="card-box tab-content">
-        <h3><i data-lucide="pen-tool"></i> 新增一筆紀錄</h3>
+        <h3><PenTool /> 新增一筆紀錄</h3>
         <form @submit.prevent="addRecord" class="finance-form">
           <div class="form-row">
             <div class="form-group">
@@ -109,29 +109,29 @@
             <input type="text" v-model="form.note" placeholder="例：買小卡、吃火鍋、捷運加值" />
           </div>
 
-          <button type="submit" class="submit-btn"><i data-lucide="check"></i> 儲存這筆紀錄</button>
+          <button type="submit" class="submit-btn"><Check /> 儲存這筆紀錄</button>
         </form>
       </div>
 
       <!-- 分頁 2：支出圖表分析 -->
       <div v-if="currentTab === 'chart'" class="card-box tab-content">
-        <h3><i data-lucide="bar-chart-2"></i> 支出分類比例分析</h3>
+        <h3><BarChart2 /> 支出分類比例分析</h3>
         <div v-if="records.filter(r => r.type === 'expense').length === 0" class="status-msg">
-          <i data-lucide="inbox" class="msg-icon"></i> 目前還沒有支出紀錄，無法生成圖表。
+          <Inbox class="msg-icon" /> 目前還沒有支出紀錄，無法生成圖表。
         </div>
         <PieChart v-else :records="records" />
       </div>
 
       <!-- 分頁 3：歷史紀錄明細 -->
       <div v-if="currentTab === 'list'" class="card-box tab-content">
-        <h3><i data-lucide="list"></i> 收支紀錄明細</h3>
-        <div v-if="loading" class="status-msg"><i data-lucide="loader-2" class="msg-icon spin"></i> 資料載入中...</div>
-        <div v-else-if="records.length === 0" class="status-msg"><i data-lucide="inbox" class="msg-icon"></i> 目前還沒有紀錄，快來上記第一筆吧！</div>
+        <h3><List /> 收支紀錄明細</h3>
+        <div v-if="loading" class="status-msg"><Loader2 class="msg-icon spin" /> 資料載入中...</div>
+        <div v-else-if="records.length === 0" class="status-msg"><Inbox class="msg-icon" /> 目前還沒有紀錄，快來上記第一筆吧！</div>
         <ul v-else class="record-list">
           <li v-for="item in records" :key="item.id" :class="['record-item', item.type]">
             <div class="item-left">
               <span class="category-badge">
-                <i :data-lucide="getCategoryIcon(item.category)" class="badge-icon"></i>
+                <component :is="getCategoryIcon(item.category)" class="badge-icon" />
                 {{ item.category }}
               </span>
               <div class="item-detail">
@@ -144,7 +144,7 @@
                 {{ item.type === 'expense' ? '-' : '+' }}${{ item.amount }}
               </span>
               <button @click="deleteRecord(item.id)" class="del-btn" title="刪除">
-                <i data-lucide="trash-2"></i>
+                <Trash2 />
               </button>
             </div>
           </li>
@@ -155,7 +155,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, updated } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { db, auth, provider, signInWithPopup, signOut } from './firebase'; 
 import { onAuthStateChanged } from 'firebase/auth';
 import { 
@@ -169,9 +169,22 @@ import {
 } from 'firebase/firestore';
 import PieChart from './components/PieChart.vue';
 
+// 引入 Lucide Vue 圖示
+import {
+  Lock, Sparkles, LogIn, Info, TrendingUp, TrendingDown,
+  Wallet, PlusCircle, PieChart as PieChartIcon, Receipt,
+  PenTool, Check, BarChart2, Inbox, List, Loader2, Trash2,
+  Utensils, Car, ShoppingBag, Gamepad2, Banknote, Gift,
+  RefreshCw, Coins, Tag
+} from 'lucide-vue-next';
+
 export default {
   name: 'App',
-  components: { PieChart },
+  components: { 
+    PieChart, Lock, Sparkles, LogIn, Info, TrendingUp, TrendingDown,
+    Wallet, PlusCircle, PieChartIcon, Receipt, PenTool, Check,
+    BarChart2, Inbox, List, Loader2, Trash2
+  },
   setup() {
     const user = ref(null);
     const records = ref([]);
@@ -181,30 +194,22 @@ export default {
     const expenseCategories = ref(['飲食', '交通', '購物', '娛樂', '追星']);
     const incomeCategories = ref(['薪水', '獎金/紅包', '售出回血', '其他收入']);
 
+    // 定義動態圖示模組
     const categoryIconMap = {
-      '飲食': 'utensils',
-      '交通': 'car',
-      '購物': 'shopping-bag',
-      '娛樂': 'gamepad-2',
-      '追星': 'sparkles',
-      '薪水': 'banknote',
-      '獎金/紅包': 'gift',
-      '售出回血': 'refresh-cw',
-      '其他收入': 'coins'
+      '飲食': Utensils,
+      '交通': Car,
+      '購物': ShoppingBag,
+      '娛樂': Gamepad2,
+      '追星': Sparkles,
+      '薪水': Banknote,
+      '獎金/紅包': Gift,
+      '售出回血': RefreshCw,
+      '其他收入': Coins
     };
 
     const getCategoryIcon = (category) => {
-      return categoryIconMap[category] || 'tag';
+      return categoryIconMap[category] || Tag;
     };
-
-    const renderLucide = () => {
-      if (window.lucide) {
-        window.lucide.createIcons();
-      }
-    };
-
-    onMounted(renderLucide);
-    updated(renderLucide);
 
     const form = ref({
       date: new Date().toISOString().split('T')[0],
@@ -339,7 +344,8 @@ body {
   color: #5c4d42;
 }
 
-[data-lucide] {
+/* Lucide Vue 元件樣式 */
+svg {
   width: 18px;
   height: 18px;
   vertical-align: middle;
