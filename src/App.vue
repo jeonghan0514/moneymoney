@@ -170,20 +170,31 @@
         </ul>
       </div>
 
-      <!-- 分頁 3：支出圖表分析 (新增月份篩選) -->
+      <!-- 分頁 3：支出圖表分析 -->
       <div v-if="currentTab === 'chart'" class="card-box tab-content">
         <h3><i class="fa-solid fa-chart-simple"></i> 腎痛來源分類分析</h3>
         
-        <!-- 月份選擇器 -->
+        <!-- 年月雙選單篩選區 -->
         <div class="filter-bar">
           <div class="filter-item">
-            <label><i class="fa-solid fa-calendar-days"></i> 選擇分析月份</label>
-            <input type="month" v-model="filterMonth" />
+            <label><i class="fa-solid fa-calendar"></i> 年份</label>
+            <select v-model="filterYear">
+              <option v-for="y in yearOptions" :key="y" :value="y">{{ y }} 年</option>
+            </select>
+          </div>
+          <div class="filter-item">
+            <label><i class="fa-solid fa-calendar-days"></i> 月份</label>
+            <select v-model="filterMonthSelect">
+              <option value="ALL">全年不限</option>
+              <option v-for="m in 12" :key="m" :value="String(m).padStart(2, '0')">
+                {{ m }} 月
+              </option>
+            </select>
           </div>
         </div>
 
         <div v-if="chartMonthRecords.filter(r => r.type === 'expense').length === 0" class="status-msg">
-          <i class="fa-solid fa-inbox msg-icon"></i> 該月份目前沒有腎痛支出紀錄喔！
+          <i class="fa-solid fa-inbox msg-icon"></i> 該時間區間目前沒有腎痛支出紀錄喔！
         </div>
         <PieChart v-else :records="chartMonthRecords" />
       </div>
@@ -192,10 +203,22 @@
       <div v-if="currentTab === 'list'" class="card-box tab-content">
         <h3><i class="fa-solid fa-list"></i> 腎痛與回血明細</h3>
         
-        <div class="filter-bar">
+        <!-- 三重選單篩選區：年份 + 月份 + 分類 -->
+        <div class="filter-bar grid-3">
+          <div class="filter-item">
+            <label><i class="fa-solid fa-calendar"></i> 年份</label>
+            <select v-model="filterYear">
+              <option v-for="y in yearOptions" :key="y" :value="y">{{ y }} 年</option>
+            </select>
+          </div>
           <div class="filter-item">
             <label><i class="fa-solid fa-calendar-days"></i> 月份</label>
-            <input type="month" v-model="filterMonth" />
+            <select v-model="filterMonthSelect">
+              <option value="ALL">全年不限</option>
+              <option v-for="m in 12" :key="m" :value="String(m).padStart(2, '0')">
+                {{ m }} 月
+              </option>
+            </select>
           </div>
           <div class="filter-item">
             <label><i class="fa-solid fa-filter"></i> 分類</label>
@@ -265,10 +288,25 @@ export default {
     const loading = ref(false);
     const currentTab = ref('form');
 
+    // 取得當前年月
     const now = new Date();
-    const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    const filterMonth = ref(currentYearMonth);
+    const currentYear = String(now.getFullYear());
+    const currentMonthStr = String(now.getMonth() + 1).padStart(2, '0');
+
+    // 篩選狀態：年份與月份選單
+    const filterYear = ref(currentYear);
+    const filterMonthSelect = ref(currentMonthStr);
     const filterCategory = ref('ALL');
+
+    // 可選年份選單（包含前後幾年）
+    const yearOptions = computed(() => {
+      const years = [];
+      const y = new Date().getFullYear();
+      for (let i = y - 3; i <= y + 1; i++) {
+        years.push(String(i));
+      }
+      return years;
+    });
 
     const expenseCategories = ref(['飲食', '交通', '購物', '娛樂', '追星']);
     const incomeCategories = ref(['薪水', '獎金/紅包', '售出回血', '其他收入']);
@@ -414,15 +452,21 @@ export default {
       return pendingAdvanceList.value.reduce((sum, r) => sum + r.amount, 0);
     });
 
+    // 判斷日期是否匹配當前選中的年份與月份
+    const isDateMatch = (dateStr) => {
+      if (!dateStr) return false;
+      const targetPrefix = filterMonthSelect.value === 'ALL' 
+        ? `${filterYear.value}-` 
+        : `${filterYear.value}-${filterMonthSelect.value}`;
+      return dateStr.startsWith(targetPrefix);
+    };
+
     const currentMonthRecords = computed(() => {
-      if (!filterMonth.value) return records.value;
-      return records.value.filter(r => r.date && r.date.startsWith(filterMonth.value));
+      return records.value.filter(r => isDateMatch(r.date));
     });
 
-    // 專供圖表使用的當月紀錄過濾
     const chartMonthRecords = computed(() => {
-      if (!filterMonth.value) return records.value;
-      return records.value.filter(r => r.date && r.date.startsWith(filterMonth.value));
+      return records.value.filter(r => isDateMatch(r.date));
     });
 
     const totalIncome = computed(() => {
@@ -435,10 +479,10 @@ export default {
 
     const filteredRecords = computed(() => {
       return records.value.filter(r => {
-        const matchMonth = filterMonth.value ? (r.date && r.date.startsWith(filterMonth.value)) : true;
+        const matchTime = isDateMatch(r.date);
         const cleanedCat = cleanCategoryName(r.category);
         const matchCat = filterCategory.value === 'ALL' ? true : (cleanedCat === filterCategory.value);
-        return matchMonth && matchCat;
+        return matchTime && matchCat;
       });
     });
 
@@ -456,8 +500,10 @@ export default {
       records,
       loading,
       currentTab,
-      filterMonth,
+      filterYear,
+      filterMonthSelect,
       filterCategory,
+      yearOptions,
       expenseCategories,
       incomeCategories,
       allCategories,
@@ -743,14 +789,19 @@ body {
   margin-right: 4px;
 }
 
+/* 改良版多選單區塊 */
 .filter-bar {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   background: #fffdf9;
   border: 1px solid #f3e9d2;
   padding: 12px;
   border-radius: 14px;
   margin-bottom: 18px;
+}
+
+.filter-bar.grid-3 .filter-item {
+  flex: 1;
 }
 
 .filter-item {
@@ -769,14 +820,15 @@ body {
   gap: 4px;
 }
 
-.filter-item input, .filter-item select {
-  padding: 8px 10px;
+.filter-item select {
+  padding: 9px 10px;
   background: #ffffff;
   border: 1px solid #ebdcc4;
   border-radius: 10px;
   font-size: 13px;
   color: #5c4d42;
   outline: none;
+  cursor: pointer;
 }
 
 .form-row {
