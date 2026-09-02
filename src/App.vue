@@ -276,7 +276,7 @@
         </ul>
       </div>
 
-      <!-- 分頁 5：分類管理 (與全站美學完美結合的獨立分頁) -->
+      <!-- 分頁 5：分類管理 (全向量圖示可視化選擇) -->
       <div v-if="currentTab === 'categories'" class="card-box tab-content">
         <h3><i class="fa-solid fa-sliders"></i> 分類管理與設定</h3>
 
@@ -302,29 +302,28 @@
               </div>
             </div>
 
-            <div class="form-row align-center">
-              <div class="form-group">
-                <label>選擇圖示</label>
-                <select v-model="catForm.icon">
-                  <option value="fa-solid fa-tag">🏷️ 預設標籤</option>
-                  <option value="fa-solid fa-wand-magic-sparkles">✨ 追星周邊</option>
-                  <option value="fa-solid fa-gamepad">🎮 遊戲課金</option>
-                  <option value="fa-solid fa-cat">🐱 寵物貓咪</option>
-                  <option value="fa-solid fa-shirt">👕 服飾美妝</option>
-                  <option value="fa-solid fa-utensils">🍴 美食餐飲</option>
-                  <option value="fa-solid fa-bag-shopping">🛍️ 購物買買</option>
-                  <option value="fa-solid fa-house">🏠 居家生活</option>
-                  <option value="fa-solid fa-car">🚗 交通出行</option>
-                  <option value="fa-solid fa-coins">💰 金融理財</option>
-                </select>
+            <!-- 可視化莫蘭迪圖示選擇網格 -->
+            <div class="form-group full-width">
+              <label>選擇代表圖示 (點擊選擇)</label>
+              <div class="icon-picker-grid">
+                <button 
+                  v-for="iconOption in availableIcons" 
+                  :key="iconOption.class"
+                  type="button"
+                  :class="['icon-choice-btn', { active: catForm.icon === iconOption.class }]"
+                  @click="catForm.icon = iconOption.class"
+                  :title="iconOption.label"
+                >
+                  <i :class="iconOption.class"></i>
+                </button>
               </div>
+            </div>
 
-              <div class="form-group">
-                <label>圖表代表色</label>
-                <div class="color-picker-wrapper">
-                  <input type="color" v-model="catForm.color" class="color-picker" />
-                  <span class="color-hex">{{ catForm.color }}</span>
-                </div>
+            <div class="form-group full-width">
+              <label>圖表代表色</label>
+              <div class="color-picker-wrapper">
+                <input type="color" v-model="catForm.color" class="color-picker" />
+                <span class="color-hex">{{ catForm.color }}</span>
               </div>
             </div>
 
@@ -406,9 +405,31 @@ export default {
     const catForm = ref({
       name: '',
       type: 'expense',
-      icon: 'fa-solid fa-tag',
+      icon: 'fa-solid fa-wand-magic-sparkles',
       color: '#f4a261'
     });
+
+    // 豐富的 Font Awesome 向量圖示庫 (風格全站統一)
+    const availableIcons = [
+      { class: 'fa-solid fa-wand-magic-sparkles', label: '追星魔法' },
+      { class: 'fa-solid fa-compact-disc', label: '專輯唱片' },
+      { class: 'fa-solid fa-ticket', label: '票券門票' },
+      { class: 'fa-solid fa-gamepad', label: '遊戲課金' },
+      { class: 'fa-solid fa-cat', label: '寵物貓咪' },
+      { class: 'fa-solid fa-dog', label: '寵物狗狗' },
+      { class: 'fa-solid fa-shirt', label: '服飾穿搭' },
+      { class: 'fa-solid fa-bag-shopping', label: '購物袋' },
+      { class: 'fa-solid fa-utensils', label: '餐飲美食' },
+      { class: 'fa-solid fa-mug-hot', label: '咖啡下午茶' },
+      { class: 'fa-solid fa-car', label: '交通出行' },
+      { class: 'fa-solid fa-plane', label: '旅遊飛行' },
+      { class: 'fa-solid fa-house', label: '居家生活' },
+      { class: 'fa-solid fa-gift', label: '禮物紅包' },
+      { class: 'fa-solid fa-coins', label: '金幣回血' },
+      { class: 'fa-solid fa-heart', label: '愛心心動' },
+      { class: 'fa-solid fa-star', label: '星星珍藏' },
+      { class: 'fa-solid fa-tag', label: '預設標籤' }
+    ];
 
     const now = new Date();
     const currentYear = String(now.getFullYear());
@@ -537,13 +558,11 @@ export default {
       }
     };
 
-    // 新增或更新分類
     const saveCategory = async () => {
       if (!catForm.value.name.trim() || !user.value) return;
 
       try {
         if (editingId.value) {
-          // 更新模式
           await updateDoc(doc(db, 'custom_categories', editingId.value), {
             name: catForm.value.name.trim(),
             type: catForm.value.type,
@@ -551,7 +570,6 @@ export default {
             color: catForm.value.color
           });
         } else {
-          // 新增模式
           await addDoc(collection(db, 'custom_categories'), {
             uid: user.value.uid,
             name: catForm.value.name.trim(),
@@ -583,7 +601,7 @@ export default {
       catForm.value = {
         name: '',
         type: 'expense',
-        icon: 'fa-solid fa-tag',
+        icon: 'fa-solid fa-wand-magic-sparkles',
         color: '#f4a261'
       };
     };
@@ -750,6 +768,7 @@ export default {
       currentTab,
       editingId,
       catForm,
+      availableIcons,
       filterYear,
       filterMonthSelect,
       filterCategory,
@@ -1228,10 +1247,6 @@ body {
   margin-bottom: 15px;
 }
 
-.form-row.align-center {
-  align-items: center;
-}
-
 .form-group {
   flex: 1;
   display: flex;
@@ -1275,7 +1290,42 @@ body {
   gap: 6px;
 }
 
-/* 分類管理獨立頁面樣式 */
+/* 圖示選擇器網格樣式 */
+.icon-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  background: #fffdf9;
+  border: 1px solid #ebdcc4;
+  padding: 10px;
+  border-radius: 12px;
+}
+
+.icon-choice-btn {
+  background: #ffffff;
+  border: 1px solid #ebdcc4;
+  border-radius: 8px;
+  padding: 10px 0;
+  font-size: 16px;
+  color: #785232;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-choice-btn:hover {
+  background: #fefae0;
+}
+
+.icon-choice-btn.active {
+  background: #f4a261;
+  color: white;
+  border-color: #f4a261;
+  box-shadow: 0 2px 6px rgba(244, 162, 97, 0.4);
+}
+
 .cat-editor-card {
   background: #fffdf9;
   border: 1px solid #ebdcc4;
