@@ -2,8 +2,8 @@
   <div class="finance-container">
     <!-- 頂部標題與用戶狀態 -->
     <div class="header">
-      <h2>🔒 我的私人記帳本</h2>
-      <p class="subtitle">紀錄每一筆小美好與追星基金 🧁✨</p>
+      <h2><i data-lucide="lock" class="header-icon"></i> 私人記帳本</h2>
+      <p class="subtitle">紀錄每一筆小美好與追星基金 <i data-lucide="sparkles" class="sub-icon"></i></p>
       
       <div class="user-bar">
         <div v-if="user" class="user-info">
@@ -12,61 +12,63 @@
           <button @click="handleSignOut" class="auth-btn logout">登出</button>
         </div>
         <div v-else>
-          <button @click="handleSignIn" class="auth-btn login">🔑 使用 Google 登入雲端同步</button>
+          <button @click="handleSignIn" class="auth-btn login">
+            <i data-lucide="log-in"></i> 使用 Google 登入雲端同步
+          </button>
         </div>
       </div>
     </div>
 
     <!-- 尚未登入提示 -->
     <div v-if="!user" class="card-box status-msg">
-      <p>💡 請先點擊上方按鈕登入 Google 帳號，即可跨裝置同步你的記帳紀錄喔！</p>
+      <p>請先點擊上方按鈕登入 Google 帳號，即可跨裝置同步你的記帳紀錄喔！</p>
     </div>
 
     <!-- 登入後的主要區域 -->
     <template v-else>
-      <!-- 本月概覽卡片（常駐頂部） -->
+      <!-- 本月概覽卡片 -->
       <div class="summary-cards">
         <div class="card income">
-          <span class="card-label">本月收入 💰</span>
+          <span class="card-label"><i data-lucide="trending-up"></i> 本月收入</span>
           <h3 class="card-amount">+ ${{ totalIncome }}</h3>
         </div>
         <div class="card expense">
-          <span class="card-label">本月支出 💸</span>
+          <span class="card-label"><i data-lucide="trending-down"></i> 本月支出</span>
           <h3 class="card-amount">- ${{ totalExpense }}</h3>
         </div>
         <div class="card balance">
-          <span class="card-label">本月結餘 ✨</span>
+          <span class="card-label"><i data-lucide="wallet"></i> 本月結餘</span>
           <h3 class="card-amount" :class="{ negative: (totalIncome - totalExpense) < 0 }">
             ${{ totalIncome - totalExpense }}
           </h3>
         </div>
       </div>
 
-      <!-- 智能分頁選單（Tabs） -->
+      <!-- 分頁選單 -->
       <div class="tab-nav">
         <button 
           :class="['tab-btn', { active: currentTab === 'form' }]" 
           @click="currentTab = 'form'"
         >
-          ✍️ 新增紀錄
+          <i data-lucide="plus-circle"></i> 新增紀錄
         </button>
         <button 
           :class="['tab-btn', { active: currentTab === 'chart' }]" 
           @click="currentTab = 'chart'"
         >
-          📊 圖表分析
+          <i data-lucide="pie-chart"></i> 圖表分析
         </button>
         <button 
           :class="['tab-btn', { active: currentTab === 'list' }]" 
           @click="currentTab = 'list'"
         >
-          📜 歷史明細
+          <i data-lucide="receipt"></i> 歷史明細
         </button>
       </div>
 
       <!-- 分頁 1：新增記帳表單 -->
       <div v-if="currentTab === 'form'" class="card-box tab-content">
-        <h3>✍️ 新增一筆紀錄</h3>
+        <h3><i data-lucide="pen-tool"></i> 新增一筆紀錄</h3>
         <form @submit.prevent="addRecord" class="finance-form">
           <div class="form-row">
             <div class="form-group">
@@ -77,8 +79,8 @@
             <div class="form-group">
               <label>收支類型</label>
               <select v-model="form.type">
-                <option value="expense">💸 支出</option>
-                <option value="income">💰 收入</option>
+                <option value="expense">支出</option>
+                <option value="income">收入</option>
               </select>
             </div>
           </div>
@@ -107,28 +109,31 @@
             <input type="text" v-model="form.note" placeholder="例：買小卡、吃火鍋、捷運加值" />
           </div>
 
-          <button type="submit" class="submit-btn">✨ 儲存這筆紀錄</button>
+          <button type="submit" class="submit-btn">儲存這筆紀錄</button>
         </form>
       </div>
 
       <!-- 分頁 2：支出圖表分析 -->
       <div v-if="currentTab === 'chart'" class="card-box tab-content">
-        <h3>📊 支出分類比例分析</h3>
+        <h3><i data-lucide="bar-chart-2"></i> 支出分類比例分析</h3>
         <div v-if="records.filter(r => r.type === 'expense').length === 0" class="status-msg">
-          目前還沒有支出紀錄，無法生成圖表喔～ 🌱
+          目前還沒有支出紀錄，無法生成圖表喔～
         </div>
         <PieChart v-else :records="records" />
       </div>
 
       <!-- 分頁 3：歷史紀錄明細 -->
       <div v-if="currentTab === 'list'" class="card-box tab-content">
-        <h3>📜 收支紀錄明細</h3>
-        <div v-if="loading" class="status-msg">資料載入中... ⏳</div>
-        <div v-else-if="records.length === 0" class="status-msg">目前還沒有紀錄喔！快來上記第一筆吧～ 🌱</div>
+        <h3><i data-lucide="list"></i> 收支紀錄明細</h3>
+        <div v-if="loading" class="status-msg">資料載入中...</div>
+        <div v-else-if="records.length === 0" class="status-msg">目前還沒有紀錄喔！快來上記第一筆吧～</div>
         <ul v-else class="record-list">
           <li v-for="item in records" :key="item.id" :class="['record-item', item.type]">
             <div class="item-left">
-              <span class="category-badge">{{ item.category }}</span>
+              <span class="category-badge">
+                <i :data-lucide="getCategoryIcon(item.category)" class="badge-icon"></i>
+                {{ item.category }}
+              </span>
               <div class="item-detail">
                 <span class="note-text">{{ item.note || '未填寫備註' }}</span>
                 <span class="date-text">{{ item.date }}</span>
@@ -138,7 +143,9 @@
               <span class="amount-text">
                 {{ item.type === 'expense' ? '-' : '+' }}${{ item.amount }}
               </span>
-              <button @click="deleteRecord(item.id)" class="del-btn" title="刪除">🗑️</button>
+              <button @click="deleteRecord(item.id)" class="del-btn" title="刪除">
+                <i data-lucide="trash-2"></i>
+              </button>
             </div>
           </li>
         </ul>
@@ -148,7 +155,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, updated } from 'vue';
 import { db, auth, provider, signInWithPopup, signOut } from './firebase'; 
 import { onAuthStateChanged } from 'firebase/auth';
 import { 
@@ -169,17 +176,41 @@ export default {
     const user = ref(null);
     const records = ref([]);
     const loading = ref(false);
-    
-    // 當前選中的頁籤：'form' (表單), 'chart' (圖表), 'list' (明細)
     const currentTab = ref('form');
 
-    const expenseCategories = ref(['🍱 飲食', '🚗 交通', '🛍️ 購物', '🎮 娛樂', '💎 追隨']);
-    const incomeCategories = ref(['💵 薪水收入', '🎁 紅包/獎金', '🔄 售出回血', '✨ 其他收入']);
+    const expenseCategories = ref(['飲食', '交通', '購物', '娛樂', '追星']);
+    const incomeCategories = ref(['薪水', '獎金/紅包', '售出回血', '其他收入']);
+
+    // 分類對應的 Lucide 圖示名稱
+    const categoryIconMap = {
+      '飲食': 'utensils',
+      '交通': 'car',
+      '購物': 'shopping-bag',
+      '娛樂': 'gamepad-2',
+      '追星': 'sparkles',
+      '薪水': 'banknote',
+      '獎金/紅包': 'gift',
+      '售出回血': 'refresh-cw',
+      '其他收入': 'coins'
+    };
+
+    const getCategoryIcon = (category) => {
+      return categoryIconMap[category] || 'tag';
+    };
+
+    const renderLucide = () => {
+      if (window.lucide) {
+        window.lucide.createIcons();
+      }
+    };
+
+    onMounted(renderLucide);
+    updated(renderLucide);
 
     const form = ref({
       date: new Date().toISOString().split('T')[0],
       type: 'expense',
-      category: '🍱 飲食',
+      category: '飲食',
       amount: '',
       note: ''
     });
@@ -239,8 +270,6 @@ export default {
         form.value.amount = '';
         form.value.note = '';
         await fetchRecords();
-        
-        // 儲存成功後自動切換到「歷史明細」頁籤，方便查看新紀錄
         currentTab.value = 'list';
       } catch (error) {
         console.error('新增失敗:', error);
@@ -282,6 +311,7 @@ export default {
       expenseCategories,
       incomeCategories,
       form,
+      getCategoryIcon,
       handleSignIn,
       handleSignOut,
       addRecord,
@@ -310,6 +340,13 @@ body {
   color: #5c4d42;
 }
 
+/* Lucide 圖示基礎樣式 */
+[data-lucide] {
+  width: 18px;
+  height: 18px;
+  vertical-align: middle;
+}
+
 .header {
   text-align: center;
   margin-bottom: 20px;
@@ -319,6 +356,22 @@ body {
   margin: 0;
   font-size: 26px;
   color: #785232;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.header-icon {
+  width: 24px;
+  height: 24px;
+  color: #785232;
+}
+
+.sub-icon {
+  width: 14px;
+  height: 14px;
+  color: #d4a373;
 }
 
 .subtitle {
@@ -356,6 +409,9 @@ body {
   font-weight: bold;
   cursor: pointer;
   font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .auth-btn.login {
@@ -390,7 +446,10 @@ body {
 .card-label {
   font-size: 13px;
   color: #8c7355;
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
   margin-bottom: 6px;
 }
 
@@ -404,7 +463,6 @@ body {
 .card.expense .card-amount { color: #d96b68; }
 .card.balance .card-amount { color: #785232; }
 
-/* 頁籤選單樣式 */
 .tab-nav {
   display: flex;
   background: #f3e9d2;
@@ -424,6 +482,10 @@ body {
   font-weight: bold;
   border-radius: 10px;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   transition: all 0.2s ease;
 }
 
@@ -447,6 +509,9 @@ body {
   margin-bottom: 18px;
   font-size: 18px;
   color: #785232;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .form-row {
@@ -527,6 +592,14 @@ body {
   padding: 6px 12px;
   border-radius: 10px;
   font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.badge-icon {
+  width: 14px;
+  height: 14px;
 }
 
 .item-detail {
@@ -562,7 +635,14 @@ body {
 .del-btn {
   background: none;
   border: none;
+  color: #c9ada7;
   font-size: 16px;
   cursor: pointer;
+  padding: 4px;
+  transition: color 0.2s;
+}
+
+.del-btn:hover {
+  color: #d96b68;
 }
 </style>
