@@ -1,11 +1,9 @@
 <template>
   <div class="chart-section">
-    <!-- 圓餅圖本體 -->
     <div class="chart-container">
       <Pie :data="chartData" :options="chartOptions" />
     </div>
 
-    <!-- 各分類金額與百分比列表 -->
     <div class="category-summary">
       <div 
         v-for="item in categoryList" 
@@ -14,6 +12,7 @@
       >
         <div class="item-info">
           <span class="color-dot" :style="{ backgroundColor: item.color }"></span>
+          <i :data-lucide="item.icon" class="icon-style"></i>
           <span class="category-name">{{ item.category }}</span>
         </div>
 
@@ -27,7 +26,7 @@
 </template>
 
 <script>
-import { computed } from 'vue';
+import { computed, onMounted, updated } from 'vue';
 import { Pie } from 'vue-chartjs';
 import {
   Chart as ChartJS,
@@ -49,16 +48,31 @@ export default {
     }
   },
   setup(props) {
-    // 溫柔莫蘭迪配色字典
     const categoryColors = {
-      '🍱 飲食': '#f4a261',
-      '🚗 交通': '#e76f51',
-      '🛍️ 購物': '#e9c46a',
-      '🎮 娛樂': '#2a9d8f',
-      '💎 追隨': '#9b5de5'
+      '飲食': '#f4a261',
+      '交通': '#e76f51',
+      '購物': '#e9c46a',
+      '娛樂': '#2a9d8f',
+      '追星': '#9b5de5'
     };
 
-    // 計算總支出與各分類金額數據
+    const categoryIcons = {
+      '飲食': 'utensils',
+      '交通': 'car',
+      '購物': 'shopping-bag',
+      '娛樂': 'gamepad-2',
+      '追星': 'sparkles'
+    };
+
+    const renderLucide = () => {
+      if (window.lucide) {
+        window.lucide.createIcons();
+      }
+    };
+
+    onMounted(renderLucide);
+    updated(renderLucide);
+
     const categoryStats = computed(() => {
       const expenseRecords = props.records.filter(r => r.type === 'expense');
       const totals = {};
@@ -72,7 +86,6 @@ export default {
       return { totals, sum };
     });
 
-    // 格式化輸出給列表用的詳細數據
     const categoryList = computed(() => {
       const { totals, sum } = categoryStats.value;
       if (sum === 0) return [];
@@ -85,13 +98,13 @@ export default {
             category: cat,
             amount,
             percentage,
+            icon: categoryIcons[cat] || 'tag',
             color: categoryColors[cat] || '#a08369'
           };
         })
-        .sort((a, b) => b.amount - a.amount); // 按金額由大到小排序
+        .sort((a, b) => b.amount - a.amount);
     });
 
-    // 圓餅圖 Chart.js 數據
     const chartData = computed(() => {
       const labels = categoryList.value.map(item => item.category);
       const data = categoryList.value.map(item => item.amount);
@@ -114,9 +127,7 @@ export default {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: {
-          display: false // 隱藏原本圖表頂部的預設圖例，改用下方漂亮的自訂列表
-        }
+        legend: { display: false }
       }
     };
 
@@ -166,9 +177,15 @@ export default {
   gap: 8px;
 }
 
+.icon-style {
+  width: 16px;
+  height: 16px;
+  color: #785232;
+}
+
 .color-dot {
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   display: inline-block;
 }
