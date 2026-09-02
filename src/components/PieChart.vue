@@ -21,10 +21,7 @@
         <div class="item-values">
           <span class="percentage">{{ item.percentage }}%</span>
           <span class="amount">
-            <span v-if="isPrivacyMode" class="diamond-mask sm">
-              <i class="fa-solid fa-gem"></i><i class="fa-solid fa-gem"></i><i class="fa-solid fa-gem"></i>
-            </span>
-            <span v-else>${{ item.amount.toLocaleString() }}</span>
+            ${{ item.amount.toLocaleString() }}
           </span>
         </div>
       </div>
@@ -56,14 +53,9 @@ export default {
     customCategories: {
       type: Array,
       default: () => []
-    },
-    isPrivacyMode: {
-      type: Boolean,
-      default: false
     }
   },
   setup(props) {
-    // 預設對應你的專屬莫蘭迪配色
     const defaultColors = {
       '追星': '#92A8D1',
       '娛樂': '#D8B4E2',
@@ -234,15 +226,4 @@ export default {
   font-weight: bold;
   color: #d96b68;
 }
-
-/* 可愛玫瑰石英粉向量鑽石遮罩 */
-.diamond-mask {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: #f7cac9;
-  filter: drop-shadow(0 2px 4px rgba(247, 202, 201, 0.4));
-}
-
-.diamond-mask.sm { font-size: 12px; gap: 3px; }
 </style>
