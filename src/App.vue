@@ -1,8 +1,8 @@
 <template>
   <div class="finance-container">
     <div class="header">
-      <h2><component :is="icons.Lock" class="header-icon" /> 私人記帳本</h2>
-      <p class="subtitle">紀錄每一筆小美好與追星基金 <component :is="icons.Sparkles" class="sub-icon" /></p>
+      <h2><i class="fa-solid fa-lock header-icon"></i> 私人記帳本</h2>
+      <p class="subtitle">紀錄每一筆小美好與追星基金 <i class="fa-solid fa-wand-magic-sparkles sub-icon"></i></p>
       
       <div class="user-bar">
         <div v-if="user" class="user-info">
@@ -12,28 +12,28 @@
         </div>
         <div v-else>
           <button @click="handleSignIn" class="auth-btn login">
-            <component :is="icons.LogIn" /> 使用 Google 登入雲端同步
+            <i class="fa-solid fa-right-to-bracket"></i> 使用 Google 登入雲端同步
           </button>
         </div>
       </div>
     </div>
 
     <div v-if="!user" class="card-box status-msg">
-      <p><component :is="icons.Info" class="msg-icon" /> 請先點擊上方按鈕登入 Google 帳號，即可跨裝置同步你的記帳紀錄。</p>
+      <p><i class="fa-solid fa-circle-info msg-icon"></i> 請先點擊上方按鈕登入 Google 帳號，即可跨裝置同步你的記帳紀錄。</p>
     </div>
 
     <template v-else>
       <div class="summary-cards">
         <div class="card income">
-          <span class="card-label"><component :is="icons.TrendingUp" /> 本月收入</span>
+          <span class="card-label"><i class="fa-solid fa-chart-line"></i> 本月收入</span>
           <h3 class="card-amount">+ ${{ totalIncome }}</h3>
         </div>
         <div class="card expense">
-          <span class="card-label"><component :is="icons.TrendingDown" /> 本月支出</span>
+          <span class="card-label"><i class="fa-solid fa-arrow-trend-down"></i> 本月支出</span>
           <h3 class="card-amount">- ${{ totalExpense }}</h3>
         </div>
         <div class="card balance">
-          <span class="card-label"><component :is="icons.Wallet" /> 本月結餘</span>
+          <span class="card-label"><i class="fa-solid fa-wallet"></i> 本月結餘</span>
           <h3 class="card-amount" :class="{ negative: (totalIncome - totalExpense) < 0 }">
             ${{ totalIncome - totalExpense }}
           </h3>
@@ -45,24 +45,24 @@
           :class="['tab-btn', { active: currentTab === 'form' }]" 
           @click="currentTab = 'form'"
         >
-          <component :is="icons.PlusCircle" /> 新增紀錄
+          <i class="fa-solid fa-circle-plus"></i> 新增紀錄
         </button>
         <button 
           :class="['tab-btn', { active: currentTab === 'chart' }]" 
           @click="currentTab = 'chart'"
         >
-          <component :is="icons.PieChart" /> 圖表分析
+          <i class="fa-solid fa-chart-pie"></i> 圖表分析
         </button>
         <button 
           :class="['tab-btn', { active: currentTab === 'list' }]" 
           @click="currentTab = 'list'"
         >
-          <component :is="icons.Receipt" /> 歷史明細
+          <i class="fa-solid fa-receipt"></i> 歷史明細
         </button>
       </div>
 
       <div v-if="currentTab === 'form'" class="card-box tab-content">
-        <h3><component :is="icons.PenTool" /> 新增一筆紀錄</h3>
+        <h3><i class="fa-solid fa-pen-to-square"></i> 新增一筆紀錄</h3>
         <form @submit.prevent="addRecord" class="finance-form">
           <div class="form-row">
             <div class="form-group">
@@ -103,27 +103,27 @@
             <input type="text" v-model="form.note" placeholder="例：買小卡、吃火鍋、捷運加值" />
           </div>
 
-          <button type="submit" class="submit-btn"><component :is="icons.Check" /> 儲存這筆紀錄</button>
+          <button type="submit" class="submit-btn"><i class="fa-solid fa-check"></i> 儲存這筆紀錄</button>
         </form>
       </div>
 
       <div v-if="currentTab === 'chart'" class="card-box tab-content">
-        <h3><component :is="icons.BarChart2" /> 支出分類比例分析</h3>
+        <h3><i class="fa-solid fa-chart-simple"></i> 支出分類比例分析</h3>
         <div v-if="records.filter(r => r.type === 'expense').length === 0" class="status-msg">
-          <component :is="icons.Inbox" class="msg-icon" /> 目前還沒有支出紀錄，無法生成圖表。
+          <i class="fa-solid fa-inbox msg-icon"></i> 目前還沒有支出紀錄，無法生成圖表。
         </div>
         <PieChart v-else :records="records" />
       </div>
 
       <div v-if="currentTab === 'list'" class="card-box tab-content">
-        <h3><component :is="icons.List" /> 收支紀錄明細</h3>
-        <div v-if="loading" class="status-msg"><component :is="icons.Loader2" class="msg-icon spin" /> 資料載入中...</div>
-        <div v-else-if="records.length === 0" class="status-msg"><component :is="icons.Inbox" class="msg-icon" /> 目前還沒有紀錄，快來上記第一筆吧！</div>
+        <h3><i class="fa-solid fa-list"></i> 收支紀錄明細</h3>
+        <div v-if="loading" class="status-msg"><i class="fa-solid fa-spinner fa-spin msg-icon"></i> 資料載入中...</div>
+        <div v-else-if="records.length === 0" class="status-msg"><i class="fa-solid fa-inbox msg-icon"></i> 目前還沒有紀錄，快來上記第一筆吧！</div>
         <ul v-else class="record-list">
           <li v-for="item in records" :key="item.id" :class="['record-item', item.type]">
             <div class="item-left">
               <span class="category-badge">
-                <component :is="getCategoryIcon(item.category)" class="badge-icon" />
+                <i :class="['badge-icon', getCategoryIcon(item.category)]"></i>
                 {{ item.category }}
               </span>
               <div class="item-detail">
@@ -136,7 +136,7 @@
                 {{ item.type === 'expense' ? '-' : '+' }}${{ item.amount }}
               </span>
               <button @click="deleteRecord(item.id)" class="del-btn" title="刪除">
-                <component :is="icons.Trash2" />
+                <i class="fa-solid fa-trash-can"></i>
               </button>
             </div>
           </li>
@@ -161,15 +161,6 @@ import {
 } from 'firebase/firestore';
 import PieChart from './components/PieChart.vue';
 
-// 使用完整且無歧義的名詞匯入 Lucide Icons
-import {
-  Lock, Sparkles, LogIn, Info, TrendingUp, TrendingDown,
-  Wallet, PlusCircle, PieChart as PieChartIcon, Receipt,
-  PenTool, Check, BarChart2, Inbox, List, Loader2, Trash2,
-  Utensils, Car, ShoppingBag, Gamepad2, Banknote, Gift,
-  RefreshCw, Coins, Tag
-} from 'lucide-vue-next';
-
 export default {
   name: 'App',
   components: { PieChart },
@@ -182,28 +173,21 @@ export default {
     const expenseCategories = ref(['飲食', '交通', '購物', '娛樂', '追星']);
     const incomeCategories = ref(['薪水', '獎金/紅包', '售出回血', '其他收入']);
 
-    // 集中管理介面圖示
-    const icons = {
-      Lock, Sparkles, LogIn, Info, TrendingUp, TrendingDown,
-      Wallet, PlusCircle, PieChart: PieChartIcon, Receipt,
-      PenTool, Check, BarChart2, Inbox, List, Loader2, Trash2
-    };
-
-    // 集中管理分類對應圖示
+    // 定義 Font Awesome Class 對應
     const categoryIconMap = {
-      '飲食': Utensils,
-      '交通': Car,
-      '購物': ShoppingBag,
-      '娛樂': Gamepad2,
-      '追星': Sparkles,
-      '薪水': Banknote,
-      '獎金/紅包': Gift,
-      '售出回血': RefreshCw,
-      '其他收入': Coins
+      '飲食': 'fa-solid fa-utensils',
+      '交通': 'fa-solid fa-car',
+      '購物': 'fa-solid fa-bag-shopping',
+      '娛樂': 'fa-solid fa-gamepad',
+      '追星': 'fa-solid fa-sparkles',
+      '薪水': 'fa-solid fa-money-bill-wave',
+      '獎金/紅包': 'fa-solid fa-gift',
+      '售出回血': 'fa-solid fa-rotate',
+      '其他收入': 'fa-solid fa-coins'
     };
 
     const getCategoryIcon = (category) => {
-      return categoryIconMap[category] || Tag;
+      return categoryIconMap[category] || 'fa-solid fa-tag';
     };
 
     const form = ref({
@@ -310,7 +294,6 @@ export default {
       expenseCategories,
       incomeCategories,
       form,
-      icons,
       getCategoryIcon,
       handleSignIn,
       handleSignOut,
@@ -340,12 +323,6 @@ body {
   color: #5c4d42;
 }
 
-svg {
-  width: 18px;
-  height: 18px;
-  vertical-align: middle;
-}
-
 .header {
   text-align: center;
   margin-bottom: 20px;
@@ -362,21 +339,17 @@ svg {
 }
 
 .header-icon {
-  width: 24px;
-  height: 24px;
+  font-size: 22px;
   color: #785232;
 }
 
 .sub-icon {
-  width: 14px;
-  height: 14px;
+  font-size: 13px;
   color: #d4a373;
 }
 
 .msg-icon {
-  width: 16px;
-  height: 16px;
-  margin-right: 4px;
+  margin-right: 6px;
 }
 
 .subtitle {
@@ -454,7 +427,7 @@ svg {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 6px;
   margin-bottom: 6px;
 }
 
@@ -610,8 +583,7 @@ svg {
 }
 
 .badge-icon {
-  width: 14px;
-  height: 14px;
+  font-size: 13px;
 }
 
 .item-detail {
@@ -648,7 +620,7 @@ svg {
   background: none;
   border: none;
   color: #c9ada7;
-  font-size: 16px;
+  font-size: 15px;
   cursor: pointer;
   padding: 4px;
   transition: color 0.2s;
