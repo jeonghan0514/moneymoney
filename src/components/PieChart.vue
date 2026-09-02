@@ -12,7 +12,7 @@
       >
         <div class="item-info">
           <span class="color-dot" :style="{ backgroundColor: item.color }"></span>
-          <i :data-lucide="item.icon" class="icon-style"></i>
+          <i :class="['icon-style', item.icon]"></i>
           <span class="category-name">{{ item.category }}</span>
         </div>
 
@@ -26,7 +26,7 @@
 </template>
 
 <script>
-import { computed, onMounted, updated } from 'vue';
+import { computed } from 'vue';
 import { Pie } from 'vue-chartjs';
 import {
   Chart as ChartJS,
@@ -48,6 +48,7 @@ export default {
     }
   },
   setup(props) {
+    // 各類別莫蘭迪配色
     const categoryColors = {
       '飲食': '#f4a261',
       '交通': '#e76f51',
@@ -56,22 +57,14 @@ export default {
       '追星': '#9b5de5'
     };
 
+    // 各類別 Font Awesome 圖示 Class
     const categoryIcons = {
-      '飲食': 'utensils',
-      '交通': 'car',
-      '購物': 'shopping-bag',
-      '娛樂': 'gamepad-2',
-      '追星': 'sparkles'
+      '飲食': 'fa-solid fa-utensils',
+      '交通': 'fa-solid fa-car',
+      '購物': 'fa-solid fa-bag-shopping',
+      '娛樂': 'fa-solid fa-gamepad',
+      '追星': 'fa-solid fa-wand-magic-sparkles'
     };
-
-    const renderLucide = () => {
-      if (window.lucide) {
-        window.lucide.createIcons();
-      }
-    };
-
-    onMounted(renderLucide);
-    updated(renderLucide);
 
     const categoryStats = computed(() => {
       const expenseRecords = props.records.filter(r => r.type === 'expense');
@@ -98,7 +91,7 @@ export default {
             category: cat,
             amount,
             percentage,
-            icon: categoryIcons[cat] || 'tag',
+            icon: categoryIcons[cat] || 'fa-solid fa-tag',
             color: categoryColors[cat] || '#a08369'
           };
         })
@@ -178,9 +171,10 @@ export default {
 }
 
 .icon-style {
-  width: 16px;
-  height: 16px;
+  font-size: 14px;
   color: #785232;
+  width: 16px;
+  text-align: center;
 }
 
 .color-dot {
