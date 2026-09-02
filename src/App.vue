@@ -1,5 +1,6 @@
 <template>
   <div class="finance-container">
+    <!-- 頂部標題與用戶狀態 -->
     <div class="header">
       <h2><i class="fa-solid fa-lock header-icon"></i> 私人記帳本</h2>
       <p class="subtitle">紀錄每一筆小美好與追星基金 <i class="fa-solid fa-wand-magic-sparkles sub-icon"></i></p>
@@ -18,11 +19,14 @@
       </div>
     </div>
 
+    <!-- 尚未登入提示 -->
     <div v-if="!user" class="card-box status-msg">
       <p><i class="fa-solid fa-circle-info msg-icon"></i> 請先點擊上方按鈕登入 Google 帳號，即可跨裝置同步你的記帳紀錄。</p>
     </div>
 
+    <!-- 登入後的主要區域 -->
     <template v-else>
+      <!-- 本月概覽卡片 -->
       <div class="summary-cards">
         <div class="card income">
           <span class="card-label"><i class="fa-solid fa-chart-line"></i> 本月收入</span>
@@ -40,6 +44,7 @@
         </div>
       </div>
 
+      <!-- 分頁選單 -->
       <div class="tab-nav">
         <button 
           :class="['tab-btn', { active: currentTab === 'form' }]" 
@@ -61,6 +66,7 @@
         </button>
       </div>
 
+      <!-- 分頁 1：新增記帳表單 -->
       <div v-if="currentTab === 'form'" class="card-box tab-content">
         <h3><i class="fa-solid fa-pen-to-square"></i> 新增一筆紀錄</h3>
         <form @submit.prevent="addRecord" class="finance-form">
@@ -107,6 +113,7 @@
         </form>
       </div>
 
+      <!-- 分頁 2：支出圖表分析 -->
       <div v-if="currentTab === 'chart'" class="card-box tab-content">
         <h3><i class="fa-solid fa-chart-simple"></i> 支出分類比例分析</h3>
         <div v-if="records.filter(r => r.type === 'expense').length === 0" class="status-msg">
@@ -115,6 +122,7 @@
         <PieChart v-else :records="records" />
       </div>
 
+      <!-- 分頁 3：歷史紀錄明細 -->
       <div v-if="currentTab === 'list'" class="card-box tab-content">
         <h3><i class="fa-solid fa-list"></i> 收支紀錄明細</h3>
         <div v-if="loading" class="status-msg"><i class="fa-solid fa-spinner fa-spin msg-icon"></i> 資料載入中...</div>
@@ -124,7 +132,7 @@
             <div class="item-left">
               <span class="category-badge">
                 <i :class="['badge-icon', getCategoryIcon(item.category)]"></i>
-                {{ item.category }}
+                {{ cleanCategoryName(item.category) }}
               </span>
               <div class="item-detail">
                 <span class="note-text">{{ item.note || '未填寫備註' }}</span>
@@ -173,6 +181,13 @@ export default {
     const expenseCategories = ref(['飲食', '交通', '購物', '娛樂', '追星']);
     const incomeCategories = ref(['薪水', '獎金/紅包', '售出回血', '其他收入']);
 
+    // 清除文字中的 Emoji 表情符號
+    const cleanCategoryName = (category) => {
+      if (!category) return '';
+      return category.replace(/[\u{1F300}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim();
+    };
+
+    // 定義 Font Awesome Class 對應
     const categoryIconMap = {
       '飲食': 'fa-solid fa-utensils',
       '交通': 'fa-solid fa-car',
@@ -186,7 +201,8 @@ export default {
     };
 
     const getCategoryIcon = (category) => {
-      return categoryIconMap[category] || 'fa-solid fa-tag';
+      const cleaned = cleanCategoryName(category);
+      return categoryIconMap[cleaned] || 'fa-solid fa-tag';
     };
 
     const form = ref({
@@ -293,6 +309,7 @@ export default {
       expenseCategories,
       incomeCategories,
       form,
+      cleanCategoryName,
       getCategoryIcon,
       handleSignIn,
       handleSignOut,
