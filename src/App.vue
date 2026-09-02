@@ -111,7 +111,7 @@
             </div>
           </div>
 
-          <!-- 代墊選項 (僅支出時顯示) -->
+          <!-- 代墊選項 -->
           <div v-if="form.type === 'expense'" class="advance-box">
             <label class="checkbox-label">
               <input type="checkbox" v-model="form.isAdvance" />
@@ -170,13 +170,22 @@
         </ul>
       </div>
 
-      <!-- 分頁 3：支出圖表分析 -->
+      <!-- 分頁 3：支出圖表分析 (新增月份篩選) -->
       <div v-if="currentTab === 'chart'" class="card-box tab-content">
         <h3><i class="fa-solid fa-chart-simple"></i> 腎痛來源分類分析</h3>
-        <div v-if="records.filter(r => r.type === 'expense').length === 0" class="status-msg">
-          <i class="fa-solid fa-inbox msg-icon"></i> 目前還沒有腎痛紀錄，狀態良好！
+        
+        <!-- 月份選擇器 -->
+        <div class="filter-bar">
+          <div class="filter-item">
+            <label><i class="fa-solid fa-calendar-days"></i> 選擇分析月份</label>
+            <input type="month" v-model="filterMonth" />
+          </div>
         </div>
-        <PieChart v-else :records="records" />
+
+        <div v-if="chartMonthRecords.filter(r => r.type === 'expense').length === 0" class="status-msg">
+          <i class="fa-solid fa-inbox msg-icon"></i> 該月份目前沒有腎痛支出紀錄喔！
+        </div>
+        <PieChart v-else :records="chartMonthRecords" />
       </div>
 
       <!-- 分頁 4：歷史紀錄明細 -->
@@ -367,7 +376,6 @@ export default {
       }
     };
 
-    // 標記代墊項目為「已還款」
     const markAsSettled = async (id) => {
       try {
         await updateDoc(doc(db, 'personal_records', id), {
@@ -379,7 +387,6 @@ export default {
       }
     };
 
-    // 複製一鍵催帳訊息
     const copyPrompt = (item) => {
       const text = `${item.borrower}～上次 ${item.date} (${cleanCategoryName(item.category)}${item.note ? ' - ' + item.note : ''}) 幫你代墊了 $${item.amount} 喔！再麻煩你有空轉給我，感謝啦～✨`;
       navigator.clipboard.writeText(text).then(() => {
@@ -397,7 +404,6 @@ export default {
       }
     };
 
-    // 代墊統計與過濾
     const pendingAdvanceList = computed(() => {
       return records.value.filter(r => r.isAdvance && !r.isSettled);
     });
@@ -409,6 +415,12 @@ export default {
     });
 
     const currentMonthRecords = computed(() => {
+      if (!filterMonth.value) return records.value;
+      return records.value.filter(r => r.date && r.date.startsWith(filterMonth.value));
+    });
+
+    // 專供圖表使用的當月紀錄過濾
+    const chartMonthRecords = computed(() => {
       if (!filterMonth.value) return records.value;
       return records.value.filter(r => r.date && r.date.startsWith(filterMonth.value));
     });
@@ -453,6 +465,7 @@ export default {
       pendingAdvanceList,
       pendingAdvanceCount,
       totalPendingAdvance,
+      chartMonthRecords,
       form,
       cleanCategoryName,
       getCategoryIcon,
@@ -655,7 +668,6 @@ body {
   gap: 8px;
 }
 
-/* 代墊區域特有樣式 */
 .advance-box {
   background: #fffdf9;
   border: 1px dashed #e9c46a;
