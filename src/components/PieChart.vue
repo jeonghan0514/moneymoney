@@ -1,9 +1,11 @@
 <template>
   <div class="chart-section">
+    <!-- 圓餅圖本體 -->
     <div class="chart-container">
       <Pie :data="chartData" :options="chartOptions" />
     </div>
 
+    <!-- 各分類金額與百分比列表 -->
     <div class="category-summary">
       <div 
         v-for="item in categoryList" 
@@ -48,7 +50,7 @@ export default {
     }
   },
   setup(props) {
-    // 各類別莫蘭迪配色
+    // 莫蘭迪配色
     const categoryColors = {
       '飲食': '#f4a261',
       '交通': '#e76f51',
@@ -57,7 +59,7 @@ export default {
       '追星': '#9b5de5'
     };
 
-    // 各類別 Font Awesome 圖示 Class
+    // Font Awesome 圖示對應
     const categoryIcons = {
       '飲食': 'fa-solid fa-utensils',
       '交通': 'fa-solid fa-car',
@@ -66,13 +68,20 @@ export default {
       '追星': 'fa-solid fa-wand-magic-sparkles'
     };
 
+    // 移除舊資料中的 Emoji
+    const cleanCategoryName = (category) => {
+      if (!category) return '';
+      return category.replace(/[\u{1F300}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim();
+    };
+
     const categoryStats = computed(() => {
       const expenseRecords = props.records.filter(r => r.type === 'expense');
       const totals = {};
       let sum = 0;
 
       expenseRecords.forEach(r => {
-        totals[r.category] = (totals[r.category] || 0) + r.amount;
+        const cleanCat = cleanCategoryName(r.category);
+        totals[cleanCat] = (totals[cleanCat] || 0) + r.amount;
         sum += r.amount;
       });
 
