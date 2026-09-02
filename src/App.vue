@@ -21,7 +21,7 @@
 
     <!-- 尚未登入提示 -->
     <div v-if="!user" class="card-box status-msg">
-      <p>請先點擊上方按鈕登入 Google 帳號，即可跨裝置同步你的記帳紀錄喔！</p>
+      <p><i data-lucide="info" class="msg-icon"></i> 請先點擊上方按鈕登入 Google 帳號，即可跨裝置同步你的記帳紀錄。</p>
     </div>
 
     <!-- 登入後的主要區域 -->
@@ -109,7 +109,7 @@
             <input type="text" v-model="form.note" placeholder="例：買小卡、吃火鍋、捷運加值" />
           </div>
 
-          <button type="submit" class="submit-btn">儲存這筆紀錄</button>
+          <button type="submit" class="submit-btn"><i data-lucide="check"></i> 儲存這筆紀錄</button>
         </form>
       </div>
 
@@ -117,7 +117,7 @@
       <div v-if="currentTab === 'chart'" class="card-box tab-content">
         <h3><i data-lucide="bar-chart-2"></i> 支出分類比例分析</h3>
         <div v-if="records.filter(r => r.type === 'expense').length === 0" class="status-msg">
-          目前還沒有支出紀錄，無法生成圖表喔～
+          <i data-lucide="inbox" class="msg-icon"></i> 目前還沒有支出紀錄，無法生成圖表。
         </div>
         <PieChart v-else :records="records" />
       </div>
@@ -125,8 +125,8 @@
       <!-- 分頁 3：歷史紀錄明細 -->
       <div v-if="currentTab === 'list'" class="card-box tab-content">
         <h3><i data-lucide="list"></i> 收支紀錄明細</h3>
-        <div v-if="loading" class="status-msg">資料載入中...</div>
-        <div v-else-if="records.length === 0" class="status-msg">目前還沒有紀錄喔！快來上記第一筆吧～</div>
+        <div v-if="loading" class="status-msg"><i data-lucide="loader-2" class="msg-icon spin"></i> 資料載入中...</div>
+        <div v-else-if="records.length === 0" class="status-msg"><i data-lucide="inbox" class="msg-icon"></i> 目前還沒有紀錄，快來上記第一筆吧！</div>
         <ul v-else class="record-list">
           <li v-for="item in records" :key="item.id" :class="['record-item', item.type]">
             <div class="item-left">
@@ -181,7 +181,6 @@ export default {
     const expenseCategories = ref(['飲食', '交通', '購物', '娛樂', '追星']);
     const incomeCategories = ref(['薪水', '獎金/紅包', '售出回血', '其他收入']);
 
-    // 分類對應的 Lucide 圖示名稱
     const categoryIconMap = {
       '飲食': 'utensils',
       '交通': 'car',
@@ -340,7 +339,6 @@ body {
   color: #5c4d42;
 }
 
-/* Lucide 圖示基礎樣式 */
 [data-lucide] {
   width: 18px;
   height: 18px;
@@ -372,6 +370,12 @@ body {
   width: 14px;
   height: 14px;
   color: #d4a373;
+}
+
+.msg-icon {
+  width: 16px;
+  height: 16px;
+  margin-right: 4px;
 }
 
 .subtitle {
@@ -557,12 +561,19 @@ body {
   font-size: 16px;
   font-weight: bold;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
 .status-msg {
   text-align: center;
   color: #b09a85;
   padding: 20px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .record-list {
