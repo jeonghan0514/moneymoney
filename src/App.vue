@@ -669,6 +669,7 @@ export default {
           isAdvance: form.value.type === 'expense' ? form.value.isAdvance : false,
           borrower: form.value.isAdvance ? form.value.borrower.trim() : '',
           isSettled: false,
+          settledDate: null,
           createdAt: new Date()
         });
         
@@ -685,8 +686,10 @@ export default {
 
     const markAsSettled = async (id) => {
       try {
+        const todayStr = new Date().toISOString().split('T')[0];
         await updateDoc(doc(db, 'personal_records', id), {
-          isSettled: true
+          isSettled: true,
+          settledDate: todayStr
         });
         await fetchRecords();
       } catch (error) {
@@ -697,8 +700,12 @@ export default {
     const settleAllForBorrower = async (group) => {
       if (!confirm(`確定 ${group.borrower} 已經還清全部的 $${group.total} 嗎？`)) return;
       try {
+        const todayStr = new Date().toISOString().split('T')[0];
         const promises = group.items.map(item => 
-          updateDoc(doc(db, 'personal_records', item.id), { isSettled: true })
+          updateDoc(doc(db, 'personal_records', item.id), { 
+            isSettled: true,
+            settledDate: todayStr 
+          })
         );
         await Promise.all(promises);
         await fetchRecords();
@@ -772,8 +779,19 @@ export default {
       return records.value.filter(r => isDateMatch(r.date));
     });
 
+    // 核心修改：本月回血 = 本月本身的收入紀錄 + 本月被還款的代墊款金額
     const totalIncome = computed(() => {
-      return currentMonthRecords.value.filter(r => r.type === 'income').reduce((sum, r) => sum + r.amount, 0);
+      // 1. 本月份原生收入
+      const normalIncome = currentMonthRecords.value
+        .filter(r => r.type === 'income')
+        .reduce((sum, r) => sum + r.amount, 0);
+
+      // 2. 本月份被標記還款 (settledDate 符合當前篩選月份) 的代墊款
+      const settledAdvanceIncome = records.value
+        .filter(r => r.isAdvance && r.isSettled && isDateMatch(r.settledDate))
+        .reduce((sum, r) => sum + r.amount, 0);
+
+      return normalIncome + settledAdvanceIncome;
     });
 
     const totalExpense = computed(() => {
@@ -1389,7 +1407,6 @@ body {
   color: #8c7355;
 }
 
-/* 關鍵修復：為日期輸入框建立一個專屬的外框容器與障眼法樣式，強制它與其他輸入框百分之百等寬且永不突出去 */
 .date-input-wrapper {
   position: relative;
   width: 100%;
@@ -1783,7 +1800,7 @@ body {
   color: #d96b68;
 }
 
-/* 手機版響應式：確保上下垂直排列，且強迫所有輸入框 (含日期容器) 100% 乖乖縮在框內 */
+/* 手機版響應式 */
 @media (max-width: 600px) {
   .record-form-row {
     flex-direction: column !important;
