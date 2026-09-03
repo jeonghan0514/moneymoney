@@ -415,9 +415,7 @@ export default {
     const customCategoryList = ref([]);
     const loading = ref(false);
     
-    // 三大底部導覽分頁：wallet (錢包出血), chart (痛覺分析), advance (互助協會)
     const currentTab = ref('wallet');
-    // 錢包出血內部的子分頁：form (新增紀錄), categories (分類管理)
     const walletSubTab = ref('form');
 
     const isPrivacyMode = ref(localStorage.getItem('privacy_mode') === 'true');
@@ -1368,6 +1366,7 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-width: 0; /* 防止子元素撐爆容器 */
 }
 
 .form-group.full-width {
@@ -1389,6 +1388,8 @@ body {
   font-size: 14px;
   color: #5c4d42;
   outline: none;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .submit-btn {
@@ -1629,9 +1630,11 @@ body {
 }
 
 .item-left {
+  flex: 1;
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
 }
 
 .category-badge {
@@ -1644,6 +1647,7 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-shrink: 0;
 }
 
 .badge-icon { font-size: 13px; }
@@ -1651,12 +1655,16 @@ body {
 .item-detail {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .note-text {
   font-size: 14px;
   font-weight: 600;
   color: #5c4d42;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .date-text {
@@ -1668,6 +1676,7 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-shrink: 0;
 }
 
 .amount-text {
@@ -1690,5 +1699,18 @@ body {
 
 .del-btn:hover {
   color: #d96b68;
+}
+
+/* 響應式微調：手機螢幕較小時，讓表單欄位自動垂直堆疊，防止任何凸出爆版 */
+@media (max-width: 480px) {
+  .form-row {
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  
+  .icon-picker-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 </style>
