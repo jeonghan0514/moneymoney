@@ -849,6 +849,10 @@ body {
   margin: 0;
   padding: 0;
   background-color: #fdfaf2;
+  box-sizing: border-box;
+}
+*, *:before, *:after {
+  box-sizing: inherit;
 }
 </style>
 
@@ -859,6 +863,7 @@ body {
   padding: 24px 16px 90px 16px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   color: #5c4d42;
+  overflow-x: hidden;
 }
 
 .diamond-mask {
@@ -1360,13 +1365,14 @@ body {
   display: flex;
   gap: 15px;
   margin-bottom: 15px;
+  width: 100%;
 }
 
 .form-group {
   flex: 1;
   display: flex;
   flex-direction: column;
-  min-width: 0; /* 防止子元素撐爆容器 */
+  min-width: 0;
 }
 
 .form-group.full-width {
@@ -1389,7 +1395,7 @@ body {
   color: #5c4d42;
   outline: none;
   width: 100%;
-  box-sizing: border-box;
+  max-width: 100%;
 }
 
 .submit-btn {
@@ -1467,6 +1473,7 @@ body {
   border: 1px solid #ebdcc4;
   padding: 6px 12px;
   border-radius: 12px;
+  width: 100%;
 }
 
 .color-picker {
@@ -1559,6 +1566,7 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
 }
 
 .cat-icon-circle {
@@ -1570,17 +1578,22 @@ body {
   align-items: center;
   justify-content: center;
   font-size: 14px;
+  flex-shrink: 0;
 }
 
 .cat-item-meta {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .cat-item-name {
   font-size: 14px;
   font-weight: 700;
   color: #5c4d42;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .cat-item-type {
@@ -1591,6 +1604,7 @@ body {
 .cat-item-actions {
   display: flex;
   gap: 6px;
+  flex-shrink: 0;
 }
 
 .action-btn-sm {
@@ -1701,16 +1715,20 @@ body {
   color: #d96b68;
 }
 
-/* 響應式微調：手機螢幕較小時，讓表單欄位自動垂直堆疊，防止任何凸出爆版 */
-@media (max-width: 480px) {
+/* 強制手機螢幕上所有表單列（包含分類管理那行）直向排列，徹底根絕凸出去！ */
+@media (max-width: 600px) {
   .form-row {
-    flex-direction: column;
-    gap: 12px;
-    margin-bottom: 12px;
+    flex-direction: column !important;
+    gap: 12px !important;
+    margin-bottom: 12px !important;
   }
   
+  .form-group {
+    width: 100% !important;
+  }
+
   .icon-picker-grid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, 1fr) !important;
   }
 }
 </style>
