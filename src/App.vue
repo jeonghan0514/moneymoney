@@ -80,7 +80,7 @@
         <div v-if="walletSubTab === 'form'" class="card-box tab-content">
           <h3><i class="fa-solid fa-pen-to-square"></i> 新增一筆紀錄</h3>
           <form @submit.prevent="addRecord" class="finance-form">
-            <div class="form-row record-form-row">
+            <div class="form-row">
               <div class="form-group">
                 <label>日期</label>
                 <input type="date" v-model="form.date" required />
@@ -95,7 +95,7 @@
               </div>
             </div>
 
-            <div class="form-row record-form-row">
+            <div class="form-row">
               <div class="form-group">
                 <label>分類</label>
                 <select v-model="form.category">
@@ -147,7 +147,7 @@
             </span>
 
             <form @submit.prevent="saveCategory" class="cat-form">
-              <div class="form-row cat-form-row">
+              <div class="form-row">
                 <div class="form-group">
                   <label>分類名稱</label>
                   <input type="text" v-model="catForm.name" placeholder="例如：課金、美妝、周邊" required />
@@ -1716,20 +1716,16 @@ body {
   color: #d96b68;
 }
 
-/* 針對所有表單列（新增紀錄與分類管理）在手機上優化：改為等寬防爆版 */
+/* 手機版直向堆疊：讓所有表單欄位在窄螢幕自動上下排列，絕不爆版 */
 @media (max-width: 600px) {
   .form-row {
-    flex-wrap: wrap !important;
-    gap: 10px !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    margin-bottom: 12px !important;
   }
   
   .form-group {
-    flex: 1 1 46% !important; /* 讓手機上一行排兩個，並強制縮在卡片內 */
-    min-width: 120px !important;
-  }
-
-  .form-group.full-width {
-    flex: 1 1 100% !important;
+    width: 100% !important;
   }
 
   .icon-picker-grid {
