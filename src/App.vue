@@ -76,17 +76,17 @@
           </button>
         </div>
 
-        <!-- 子分頁 A：新增紀錄表單 -->
+        <!-- 子分頁 A：新增紀錄表單 (獨立使用 record-form 類別，手機自動完美垂直排列) -->
         <div v-if="walletSubTab === 'form'" class="card-box tab-content">
           <h3><i class="fa-solid fa-pen-to-square"></i> 新增一筆紀錄</h3>
-          <form @submit.prevent="addRecord" class="finance-form">
-            <div class="form-row">
-              <div class="form-group">
+          <form @submit.prevent="addRecord" class="record-form">
+            <div class="record-form-row">
+              <div class="record-form-group">
                 <label>日期</label>
                 <input type="date" v-model="form.date" required />
               </div>
 
-              <div class="form-group">
+              <div class="record-form-group">
                 <label>收支類型</label>
                 <select v-model="form.type">
                   <option value="expense">支出 (腎痛)</option>
@@ -95,8 +95,8 @@
               </div>
             </div>
 
-            <div class="form-row">
-              <div class="form-group">
+            <div class="record-form-row">
+              <div class="record-form-group">
                 <label>分類</label>
                 <select v-model="form.category">
                   <template v-if="form.type === 'expense'">
@@ -108,7 +108,7 @@
                 </select>
               </div>
 
-              <div class="form-group">
+              <div class="record-form-group">
                 <label>金額</label>
                 <input type="number" v-model.number="form.amount" min="1" placeholder="0" required />
               </div>
@@ -120,13 +120,13 @@
                 <input type="checkbox" v-model="form.isAdvance" />
                 <span><i class="fa-solid fa-user-tag"></i> 這筆是幫朋友代墊的</span>
               </label>
-              <div v-if="form.isAdvance" class="form-group margin-top-sm">
+              <div v-if="form.isAdvance" class="record-form-group margin-top-sm">
                 <label>對象 (朋友名字)</label>
                 <input type="text" v-model="form.borrower" placeholder="例如：小明、阿華" required />
               </div>
             </div>
 
-            <div class="form-group full-width">
+            <div class="record-form-group full-width">
               <label>備註說明</label>
               <input type="text" v-model="form.note" placeholder="例：小卡、演唱會門票、周邊、吃火鍋" />
             </div>
@@ -1361,6 +1361,46 @@ body {
   cursor: pointer;
 }
 
+/* 獨立的新增紀錄表單專用樣式 (保證電腦版並排、手機版穩固垂直排列) */
+.record-form-row {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 15px;
+  width: 100%;
+}
+
+.record-form-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.record-form-group.full-width {
+  margin-bottom: 18px;
+}
+
+.record-form-group label {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #8c7355;
+}
+
+.record-form-group input, .record-form-group select {
+  padding: 11px 14px;
+  background: #fffdf9;
+  border: 1px solid #ebdcc4;
+  border-radius: 12px;
+  font-size: 14px;
+  color: #5c4d42;
+  outline: none;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* 一般表單樣式 (供分類管理等其他表單使用) */
 .form-row {
   display: flex;
   gap: 15px;
@@ -1716,8 +1756,18 @@ body {
   color: #d96b68;
 }
 
-/* 手機版直向堆疊：讓所有表單欄位在窄螢幕自動上下排列，絕不爆版 */
+/* 手機版響應式斷點：讓「新增紀錄」與「分類管理」在手機上各自完美垂直排列 */
 @media (max-width: 600px) {
+  .record-form-row {
+    flex-direction: column !important;
+    gap: 12px !important;
+    margin-bottom: 12px !important;
+  }
+  
+  .record-form-group {
+    width: 100% !important;
+  }
+
   .form-row {
     flex-direction: column !important;
     gap: 12px !important;
@@ -1732,4 +1782,3 @@ body {
     grid-template-columns: repeat(4, 1fr) !important;
   }
 }
-</style>
