@@ -1361,7 +1361,7 @@ body {
   cursor: pointer;
 }
 
-/* 獨立的新增紀錄表單專用樣式 (保證電腦版並排、手機版穩固垂直排列) */
+/* 獨立的新增紀錄表單專用樣式 */
 .record-form-row {
   display: flex;
   gap: 15px;
@@ -1756,26 +1756,44 @@ body {
   color: #d96b68;
 }
 
-/* 手機版響應式斷點：讓「新增紀錄」與「分類管理」在手機上各自完美垂直排列 */
+/* 手機版響應式斷點：強制所有輸入框和群組收在 100% 寬度內，防止突出去 */
 @media (max-width: 600px) {
   .record-form-row {
     flex-direction: column !important;
     gap: 12px !important;
     margin-bottom: 12px !important;
+    width: 100% !important;
   }
   
   .record-form-group {
     width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .record-form-group input, 
+  .record-form-group select {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
   }
 
   .form-row {
     flex-direction: column !important;
     gap: 12px !important;
     margin-bottom: 12px !important;
+    width: 100% !important;
   }
   
   .form-group {
     width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .form-group input, 
+  .form-group select {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
   }
 
   .icon-picker-grid {
