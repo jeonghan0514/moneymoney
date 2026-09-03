@@ -1756,7 +1756,7 @@ body {
   color: #d96b68;
 }
 
-/* 手機版響應式斷點：強制所有輸入框和群組收在 100% 寬度內，防止突出去 */
+/* 手機版響應式：確保上下垂直排列，且強迫所有輸入框 (含日期) 100% 乖乖縮在框內，絕不突出去 */
 @media (max-width: 600px) {
   .record-form-row {
     flex-direction: column !important;
