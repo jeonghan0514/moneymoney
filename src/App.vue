@@ -116,14 +116,21 @@
               </div>
             </div>
 
-            <!-- 代墊選項 -->
+            <!-- 代墊選項 (支援別人幫我出 或 我幫別人出) -->
             <div v-if="form.type === 'expense'" class="advance-box">
-              <label class="checkbox-label">
-                <input type="checkbox" v-model="form.isAdvance" />
-                <span><i class="fa-solid fa-user-tag"></i> 這筆是幫朋友代墊的</span>
-              </label>
-              <div v-if="form.isAdvance" class="record-form-group margin-top-sm">
-                <label>對象 (朋友名字)</label>
+              <div class="advance-type-selector">
+                <label class="radio-label">
+                  <input type="radio" value="lend" v-model="form.advanceDirection" />
+                  <span>我幫朋友代墊</span>
+                </label>
+                <label class="radio-label">
+                  <input type="radio" value="borrow" v-model="form.advanceDirection" />
+                  <span>朋友幫我代墊 (我欠人)</span>
+                </label>
+              </div>
+
+              <div class="record-form-group margin-top-sm">
+                <label>{{ form.advanceDirection === 'lend' ? '對象 (朋友名字)' : '債主 (誰幫你付的)' }}</label>
                 <input type="text" v-model="form.borrower" placeholder="例如：小明、阿華" required />
               </div>
             </div>
@@ -297,7 +304,9 @@
                 </span>
                 <div class="item-detail">
                   <span class="note-text">
-                    <span v-if="item.isAdvance" class="borrower-tag">[代墊: {{ item.borrower }}]</span>
+                    <span v-if="item.isAdvance" :class="item.advanceDirection === 'borrow' ? 'borrower-tag-blue' : 'borrower-tag'">
+                      [{{ item.advanceDirection === 'borrow' ? '欠債主: ' + item.borrower : '代墊: ' + item.borrower }}]
+                    </span>
                     {{ item.note || '未填寫備註' }}
                   </span>
                   <span class="date-text">{{ item.date }}</span>
@@ -319,56 +328,119 @@
       <!-- ==================== 分頁 3：🤝 互助協會 (代墊管理與設定) ==================== -->
       <div v-if="currentTab === 'advance'" class="tab-page-content">
         <div class="card-box tab-content">
-          <h3><i class="fa-solid fa-hand-holding-dollar"></i> 代墊討債專區</h3>
+          <h3><i class="fa-solid fa-hand-holding-dollar"></i> 互助協會 (代墊與債務管理)</h3>
           
-          <div class="advance-summary">
-            <span>待收代墊款總計</span>
-            <h2 class="advance-total">
-              ${{ totalPendingAdvance.toLocaleString() }}
-            </h2>
+          <!-- 互助協會內部的小分頁切換：別人欠我 vs 我欠別人 -->
+          <div class="sub-tab-nav margin-bottom-md">
+            <button :class="['sub-tab-btn', { active: advanceSubTab === 'lend' }]" @click="advanceSubTab = 'lend'">
+              <i class="fa-solid fa-arrow-right-arrow-left"></i> 別人欠我 ({{ pendingLendCount }})
+            </button>
+            <button :class="['sub-tab-btn', { active: advanceSubTab === 'borrow' }]" @click="advanceSubTab = 'borrow'">
+              <i class="fa-solid fa-wallet"></i> 我欠別人 ({{ pendingBorrowCount }})
+            </button>
           </div>
 
-          <div v-if="groupedAdvanceList.length === 0" class="status-msg">
-            <i class="fa-solid fa-circle-check msg-icon"></i> 目前沒有未結清的代墊，大家都還清囉！✨
-          </div>
-
-          <div v-else class="borrower-group-list">
-            <div v-for="group in groupedAdvanceList" :key="group.borrower" class="borrower-card">
-              <div class="borrower-card-header">
-                <div class="borrower-info">
-                  <span class="borrower-avatar"><i class="fa-solid fa-user"></i></span>
-                  <div class="borrower-name-box">
-                    <h4 class="borrower-name">{{ group.borrower }}</h4>
-                    <span class="borrower-count">
-                      小計: <strong>${{ group.total.toLocaleString() }}</strong> ({{ group.items.length }}筆)
-                    </span>
-                  </div>
-                </div>
-
-                <div class="borrower-header-actions">
-                  <button @click="copyGroupPrompt(group)" class="mini-action-btn copy" title="複製 LINE 催帳訊息">
-                    <i class="fa-solid fa-copy"></i> 複製
-                  </button>
-                  <button @click="settleAllForBorrower(group)" class="mini-action-btn settle-all" title="全額還清">
-                    <i class="fa-solid fa-check-double"></i> 還清
-                  </button>
-                </div>
-              </div>
-
-              <ul class="borrower-item-list">
-                <li v-for="item in group.items" :key="item.id" class="borrower-sub-item">
-                  <div class="sub-item-left">
-                    <span class="sub-item-note">{{ cleanCategoryName(item.category) }} - {{ item.note || '未填寫備註' }}</span>
-                    <span class="sub-item-date">{{ item.date }}</span>
-                  </div>
-                  <div class="sub-item-right">
-                    <span class="sub-item-amount">${{ item.amount }}</span>
-                    <button @click="markAsSettled(item.id)" class="mini-btn" title="單筆還款">已還</button>
-                  </div>
-                </li>
-              </ul>
+          <!-- 區塊 A：別人欠我 (待收代墊) -->
+          <template v-if="advanceSubTab === 'lend'">
+            <div class="advance-summary">
+              <span>待收代墊款總計 (別人要還你)</span>
+              <h2 class="advance-total">
+                ${{ totalPendingLend.toLocaleString() }}
+              </h2>
             </div>
-          </div>
+
+            <div v-if="groupedLendList.length === 0" class="status-msg">
+              <i class="fa-solid fa-circle-check msg-icon"></i> 目前沒有未結清的代墊，大家都還清囉！✨
+            </div>
+
+            <div v-else class="borrower-group-list">
+              <div v-for="group in groupedLendList" :key="group.borrower" class="borrower-card">
+                <div class="borrower-card-header">
+                  <div class="borrower-info">
+                    <span class="borrower-avatar"><i class="fa-solid fa-user"></i></span>
+                    <div class="borrower-name-box">
+                      <h4 class="borrower-name">{{ group.borrower }}</h4>
+                      <span class="borrower-count">
+                        小計: <strong>${{ group.total.toLocaleString() }}</strong> ({{ group.items.length }}筆)
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="borrower-header-actions">
+                    <button @click="copyGroupPrompt(group)" class="mini-action-btn copy" title="複製 LINE 催帳訊息">
+                      <i class="fa-solid fa-copy"></i> 複製
+                    </button>
+                    <button @click="settleAllForBorrower(group)" class="mini-action-btn settle-all" title="全額還清">
+                      <i class="fa-solid fa-check-double"></i> 還清
+                    </button>
+                  </div>
+                </div>
+
+                <ul class="borrower-item-list">
+                  <li v-for="item in group.items" :key="item.id" class="borrower-sub-item">
+                    <div class="sub-item-left">
+                      <span class="sub-item-note">{{ cleanCategoryName(item.category) }} - {{ item.note || '未填寫備註' }}</span>
+                      <span class="sub-item-date">{{ item.date }}</span>
+                    </div>
+                    <div class="sub-item-right">
+                      <span class="sub-item-amount">${{ item.amount }}</span>
+                      <button @click="markAsSettled(item.id)" class="mini-btn" title="單筆還款">已還</button>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </template>
+
+          <!-- 區塊 B：我欠別人 (待還債務) -->
+          <template v-if="advanceSubTab === 'borrow'">
+            <div class="advance-summary borrow-summary">
+              <span>待還債務總計 (你要還給別人)</span>
+              <h2 class="advance-total borrow-total">
+                ${{ totalPendingBorrow.toLocaleString() }}
+              </h2>
+            </div>
+
+            <div v-if="groupedBorrowList.length === 0" class="status-msg">
+              <i class="fa-solid fa-circle-check msg-icon"></i> 太棒了！你沒有欠別人錢，一身輕！🎉
+            </div>
+
+            <div v-else class="borrower-group-list">
+              <div v-for="group in groupedBorrowList" :key="group.borrower" class="borrower-card">
+                <div class="borrower-card-header">
+                  <div class="borrower-info">
+                    <span class="borrower-avatar borrow-avatar"><i class="fa-solid fa-user-shield"></i></span>
+                    <div class="borrower-name-box">
+                      <h4 class="borrower-name">{{ group.borrower }} (債主)</h4>
+                      <span class="borrower-count">
+                        應付小計: <strong class="text-blue">${{ group.total.toLocaleString() }}</strong> ({{ group.items.length }}筆)
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="borrower-header-actions">
+                    <button @click="settleAllForBorrower(group)" class="mini-action-btn settle-all-borrow" title="已結清">
+                      <i class="fa-solid fa-check-double"></i> 我已還清
+                    </button>
+                  </div>
+                </div>
+
+                <ul class="borrower-item-list">
+                  <li v-for="item in group.items" :key="item.id" class="borrower-sub-item">
+                    <div class="sub-item-left">
+                      <span class="sub-item-note">{{ cleanCategoryName(item.category) }} - {{ item.note || '未填寫備註' }}</span>
+                      <span class="sub-item-date">{{ item.date }}</span>
+                    </div>
+                    <div class="sub-item-right">
+                      <span class="sub-item-amount text-blue">${{ item.amount }}</span>
+                      <button @click="markAsSettled(item.id)" class="mini-btn borrow-btn" title="單筆還清">已還</button>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </template>
+
         </div>
       </div>
     </template>
@@ -386,7 +458,7 @@
       <button :class="['nav-item', { active: currentTab === 'advance' }]" @click="currentTab = 'advance'">
         <i class="fa-solid fa-handshake-angle"></i>
         <span>互助協會</span>
-        <span v-if="pendingAdvanceCount > 0" class="nav-badge">{{ pendingAdvanceCount }}</span>
+        <span v-if="(pendingLendCount + pendingBorrowCount) > 0" class="nav-badge">{{ pendingLendCount + pendingBorrowCount }}</span>
       </button>
     </nav>
   </div>
@@ -419,6 +491,7 @@ export default {
     
     const currentTab = ref('wallet');
     const walletSubTab = ref('form');
+    const advanceSubTab = ref('lend'); // 'lend' = 別人欠我, 'borrow' = 我欠別人
 
     const isPrivacyMode = ref(localStorage.getItem('privacy_mode') === 'true');
 
@@ -523,6 +596,7 @@ export default {
       amount: '',
       note: '',
       isAdvance: false,
+      advanceDirection: 'lend', // 'lend' = 我幫朋友墊, 'borrow' = 朋友幫我墊
       borrower: ''
     });
 
@@ -667,6 +741,7 @@ export default {
           amount: Number(form.value.amount),
           note: form.value.note,
           isAdvance: form.value.type === 'expense' ? form.value.isAdvance : false,
+          advanceDirection: form.value.isAdvance ? form.value.advanceDirection : 'lend',
           borrower: form.value.isAdvance ? form.value.borrower.trim() : '',
           isSettled: false,
           settledDate: null,
@@ -676,6 +751,7 @@ export default {
         form.value.amount = '';
         form.value.note = '';
         form.value.isAdvance = false;
+        form.value.advanceDirection = 'lend';
         form.value.borrower = '';
         await fetchRecords();
         currentTab.value = 'chart';
@@ -698,7 +774,7 @@ export default {
     };
 
     const settleAllForBorrower = async (group) => {
-      if (!confirm(`確定 ${group.borrower} 已經還清全部的 $${group.total} 嗎？`)) return;
+      if (!confirm(`確定與 ${group.borrower} 的這筆款項已經全部結清了嗎？`)) return;
       try {
         const todayStr = new Date().toISOString().split('T')[0];
         const promises = group.items.map(item => 
@@ -736,26 +812,47 @@ export default {
       }
     };
 
-    const pendingAdvanceList = computed(() => {
-      return records.value.filter(r => r.isAdvance && !r.isSettled);
+    // 1. 別人欠我 (lend) 未結清列表
+    const pendingLendList = computed(() => {
+      return records.value.filter(r => r.isAdvance && r.advanceDirection !== 'borrow' && !r.isSettled);
     });
 
-    const pendingAdvanceCount = computed(() => pendingAdvanceList.value.length);
+    const pendingLendCount = computed(() => pendingLendList.value.length);
 
-    const totalPendingAdvance = computed(() => {
-      return pendingAdvanceList.value.reduce((sum, r) => sum + r.amount, 0);
+    const totalPendingLend = computed(() => {
+      return pendingLendList.value.reduce((sum, r) => sum + r.amount, 0);
     });
 
-    const groupedAdvanceList = computed(() => {
+    const groupedLendList = computed(() => {
       const groups = {};
-      pendingAdvanceList.value.forEach(item => {
+      pendingLendList.value.forEach(item => {
         const name = item.borrower || '未具名朋友';
         if (!groups[name]) {
-          groups[name] = {
-            borrower: name,
-            total: 0,
-            items: []
-          };
+          groups[name] = { borrower: name, total: 0, items: [] };
+        }
+        groups[name].items.push(item);
+        groups[name].total += item.amount;
+      });
+      return Object.values(groups);
+    });
+
+    // 2. 我欠別人 (borrow) 未結清列表
+    const pendingBorrowList = computed(() => {
+      return records.value.filter(r => r.isAdvance && r.advanceDirection === 'borrow' && !r.isSettled);
+    });
+
+    const pendingBorrowCount = computed(() => pendingBorrowList.value.length);
+
+    const totalPendingBorrow = computed(() => {
+      return pendingBorrowList.value.reduce((sum, r) => sum + r.amount, 0);
+    });
+
+    const groupedBorrowList = computed(() => {
+      const groups = {};
+      pendingBorrowList.value.forEach(item => {
+        const name = item.borrower || '未具名債主';
+        if (!groups[name]) {
+          groups[name] = { borrower: name, total: 0, items: [] };
         }
         groups[name].items.push(item);
         groups[name].total += item.amount;
@@ -779,16 +876,14 @@ export default {
       return records.value.filter(r => isDateMatch(r.date));
     });
 
-    // 核心修改：本月回血 = 本月本身的收入紀錄 + 本月被還款的代墊款金額
+    // 本月回血 = 本月原生收入 + 本月收到還款的代墊款
     const totalIncome = computed(() => {
-      // 1. 本月份原生收入
       const normalIncome = currentMonthRecords.value
         .filter(r => r.type === 'income')
         .reduce((sum, r) => sum + r.amount, 0);
 
-      // 2. 本月份被標記還款 (settledDate 符合當前篩選月份) 的代墊款
       const settledAdvanceIncome = records.value
-        .filter(r => r.isAdvance && r.isSettled && isDateMatch(r.settledDate))
+        .filter(r => r.isAdvance && r.advanceDirection !== 'borrow' && r.isSettled && isDateMatch(r.settledDate))
         .reduce((sum, r) => sum + r.amount, 0);
 
       return normalIncome + settledAdvanceIncome;
@@ -825,6 +920,7 @@ export default {
       loading,
       currentTab,
       walletSubTab,
+      advanceSubTab,
       isPrivacyMode,
       togglePrivacy,
       editingId,
@@ -838,10 +934,12 @@ export default {
       currentIncomeCategories,
       allCategories,
       filteredRecords,
-      pendingAdvanceList,
-      pendingAdvanceCount,
-      totalPendingAdvance,
-      groupedAdvanceList,
+      pendingLendCount,
+      totalPendingLend,
+      groupedLendList,
+      pendingBorrowCount,
+      totalPendingBorrow,
+      groupedBorrowList,
       chartMonthRecords,
       form,
       cleanCategoryName,
@@ -1071,6 +1169,10 @@ body {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
+.margin-bottom-md {
+  margin-bottom: 16px;
+}
+
 .bottom-nav {
   position: fixed;
   bottom: 0;
@@ -1149,6 +1251,22 @@ body {
   margin-bottom: 15px;
 }
 
+.advance-type-selector {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 8px;
+}
+
+.radio-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #785232;
+  cursor: pointer;
+}
+
 .checkbox-label {
   display: flex;
   align-items: center;
@@ -1173,10 +1291,19 @@ body {
   color: #8c7355;
 }
 
+.advance-summary.borrow-summary {
+  background: #eef4f8;
+  border: 1px solid #d0e1fd;
+}
+
 .advance-total {
   margin: 6px 0 0 0;
   color: #e76f51;
   font-size: 28px;
+}
+
+.advance-total.borrow-total {
+  color: #457b9d;
 }
 
 .borrower-group-list {
@@ -1219,6 +1346,10 @@ body {
   flex-shrink: 0;
 }
 
+.borrower-avatar.borrow-avatar {
+  background: #457b9d;
+}
+
 .borrower-name-box {
   display: flex;
   flex-direction: column;
@@ -1239,6 +1370,10 @@ body {
 
 .borrower-count strong {
   color: #d96b68;
+}
+
+.borrower-count strong.text-blue {
+  color: #457b9d;
 }
 
 .borrower-header-actions {
@@ -1271,6 +1406,11 @@ body {
 
 .mini-action-btn.settle-all {
   background: #b5838d;
+  color: white;
+}
+
+.mini-action-btn.settle-all-borrow {
+  background: #457b9d;
   color: white;
 }
 
@@ -1322,6 +1462,10 @@ body {
   color: #d96b68;
 }
 
+.sub-item-amount.text-blue {
+  color: #457b9d;
+}
+
 .mini-btn {
   background: #519872;
   color: white;
@@ -1338,8 +1482,22 @@ body {
   background: #3b7053;
 }
 
+.mini-btn.borrow-btn {
+  background: #457b9d;
+}
+
+.mini-btn.borrow-btn:hover {
+  background: #1d3557;
+}
+
 .borrower-tag {
   color: #e76f51;
+  font-size: 12px;
+  margin-right: 4px;
+}
+
+.borrower-tag-blue {
+  color: #457b9d;
   font-size: 12px;
   margin-right: 4px;
 }
