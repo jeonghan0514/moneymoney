@@ -147,7 +147,7 @@
             </span>
 
             <form @submit.prevent="saveCategory" class="cat-form">
-              <div class="form-row">
+              <div class="form-row cat-form-row">
                 <div class="form-group">
                   <label>分類名稱</label>
                   <input type="text" v-model="catForm.name" placeholder="例如：課金、美妝、周邊" required />
@@ -1396,6 +1396,7 @@ body {
   outline: none;
   width: 100%;
   max-width: 100%;
+  box-sizing: border-box;
 }
 
 .submit-btn {
@@ -1715,15 +1716,15 @@ body {
   color: #d96b68;
 }
 
-/* 強制手機螢幕上所有表單列（包含分類管理那行）直向排列，徹底根絕凸出去！ */
+/* 僅針對分類管理的表單列在手機上直向堆疊，放過新增紀錄表單 */
 @media (max-width: 600px) {
-  .form-row {
+  .cat-form-row {
     flex-direction: column !important;
     gap: 12px !important;
     margin-bottom: 12px !important;
   }
   
-  .form-group {
+  .cat-form-row .form-group {
     width: 100% !important;
   }
 
