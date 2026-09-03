@@ -76,7 +76,7 @@
           </button>
         </div>
 
-        <!-- 子分頁 A：新增紀錄表單 (獨立使用 record-form 類別，手機自動完美垂直排列) -->
+        <!-- 子分頁 A：新增紀錄表單 -->
         <div v-if="walletSubTab === 'form'" class="card-box tab-content">
           <h3><i class="fa-solid fa-pen-to-square"></i> 新增一筆紀錄</h3>
           <form @submit.prevent="addRecord" class="record-form">
@@ -1782,3 +1782,4 @@ body {
     grid-template-columns: repeat(4, 1fr) !important;
   }
 }
+</style>
