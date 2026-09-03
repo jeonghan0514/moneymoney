@@ -83,7 +83,9 @@
             <div class="record-form-row">
               <div class="record-form-group">
                 <label>日期</label>
-                <input type="date" v-model="form.date" required />
+                <div class="date-input-wrapper">
+                  <input type="date" v-model="form.date" required class="fix-date-input" />
+                </div>
               </div>
 
               <div class="record-form-group">
@@ -1387,7 +1389,32 @@ body {
   color: #8c7355;
 }
 
-.record-form-group input, .record-form-group select {
+/* 關鍵修復：為日期輸入框建立一個專屬的外框容器與障眼法樣式，強制它與其他輸入框百分之百等寬且永不突出去 */
+.date-input-wrapper {
+  position: relative;
+  width: 100%;
+  background: #fffdf9;
+  border: 1px solid #ebdcc4;
+  border-radius: 12px;
+  padding: 11px 14px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+}
+
+.fix-date-input {
+  width: 100% !important;
+  border: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  font-size: 14px !important;
+  color: #5c4d42 !important;
+  outline: none !important;
+  box-sizing: border-box !important;
+}
+
+.record-form-group input:not(.fix-date-input), .record-form-group select {
   padding: 11px 14px;
   background: #fffdf9;
   border: 1px solid #ebdcc4;
@@ -1756,7 +1783,7 @@ body {
   color: #d96b68;
 }
 
-/* 手機版響應式：確保上下垂直排列，且強迫所有輸入框 (含日期) 100% 乖乖縮在框內，絕不突出去 */
+/* 手機版響應式：確保上下垂直排列，且強迫所有輸入框 (含日期容器) 100% 乖乖縮在框內 */
 @media (max-width: 600px) {
   .record-form-row {
     flex-direction: column !important;
@@ -1770,7 +1797,8 @@ body {
     max-width: 100% !important;
   }
 
-  .record-form-group input, 
+  .date-input-wrapper,
+  .record-form-group input:not(.fix-date-input), 
   .record-form-group select {
     width: 100% !important;
     max-width: 100% !important;
