@@ -194,9 +194,9 @@
                 </div>
               </div>
 
-              <!-- 修復後的色彩與色號輸入區塊 -->
+              <!-- 絕對不會跑版的色彩選擇器區塊 -->
               <div class="form-group full-width">
-                <label>圖表代表色 (可點擊方塊選色，或直接手動打 HEX 色號)</label>
+                <label>圖表代表色 (可點擊左側方塊選色，或直接手動打 HEX 色號)</label>
                 <div class="color-picker-wrapper-fixed">
                   <input type="color" v-model="catForm.color" class="color-picker-box" title="點擊選擇顏色" />
                   <input 
@@ -1716,7 +1716,7 @@ body {
   margin-bottom: 14px;
 }
 
-/* 修復後的色彩選擇器包覆容器：強固排版，避免跑版 */
+/* 完美修復的色彩選擇器包覆容器：強制固定方塊大小、撐滿文字欄位 */
 .color-picker-wrapper-fixed {
   display: flex;
   align-items: center;
@@ -1730,13 +1730,14 @@ body {
 }
 
 .color-picker-box {
-  width: 40px;
-  height: 34px;
-  border: none;
-  background: transparent;
+  width: 44px !important;
+  height: 38px !important;
+  min-width: 44px !important;
+  border: none !important;
+  background: transparent !important;
   cursor: pointer;
   flex-shrink: 0;
-  padding: 0;
+  padding: 0 !important;
 }
 
 .color-hex-text-input {
@@ -1748,6 +1749,7 @@ body {
   padding: 4px 0 !important;
   outline: none !important;
   width: 100% !important;
+  box-shadow: none !important;
   text-transform: uppercase;
 }
 
