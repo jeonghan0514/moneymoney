@@ -177,7 +177,7 @@
                 </div>
               </div>
 
-              <!-- 可視化莫蘭迪圖示選擇網格 (已新增更多可愛圖標) -->
+              <!-- 26個精選萬用圖標庫 -->
               <div class="form-group full-width">
                 <label>選擇代表圖示 (點擊選擇)</label>
                 <div class="icon-picker-grid">
@@ -517,11 +517,10 @@ export default {
       color: '#E8A598'
     });
 
-    // 擴充更多可愛圖標（包含禮物、氣球、蛋糕等）
+    // 26個精選萬用圖標庫 (涵蓋追星、送禮、日常、美食、娛樂、交通等)
     const availableIcons = [
-      { class: 'fa-solid fa-gift', label: '禮物送禮' },
-      { class: 'fa-solid fa-cake-candles', label: '慶祝蛋糕' },
-      { class: 'fa-solid fa-balloon', label: '氣球派對' },
+      { class: 'fa-solid fa-gift', label: '送禮/禮物' },
+      { class: 'fa-solid fa-cake-candles', label: '慶祝/蛋糕' },
       { class: 'fa-solid fa-wand-magic-sparkles', label: '追星魔法' },
       { class: 'fa-solid fa-compact-disc', label: '專輯唱片' },
       { class: 'fa-solid fa-ticket', label: '票券門票' },
@@ -529,16 +528,23 @@ export default {
       { class: 'fa-solid fa-cat', label: '寵物貓咪' },
       { class: 'fa-solid fa-dog', label: '寵物狗狗' },
       { class: 'fa-solid fa-shirt', label: '服飾穿搭' },
-      { class: 'fa-solid fa-bag-shopping', label: '購物袋' },
+      { class: 'fa-solid fa-bag-shopping', label: '購物血拼' },
       { class: 'fa-solid fa-utensils', label: '餐飲美食' },
       { class: 'fa-solid fa-mug-hot', label: '咖啡下午茶' },
+      { class: 'fa-solid fa-wine-glass', label: '聚餐小酌' },
       { class: 'fa-solid fa-car', label: '交通出行' },
       { class: 'fa-solid fa-plane', label: '旅遊飛行' },
+      { class: 'fa-solid fa-hotel', label: '住宿飯店' },
       { class: 'fa-solid fa-house', label: '居家生活' },
+      { class: 'fa-solid fa-bolt', label: '水電瓦斯' },
+      { class: 'fa-solid fa-book', label: '書籍文具' },
+      { class: 'fa-solid fa-stethoscope', label: '醫療保健' },
+      { class: 'fa-solid fa-dumbbell', label: '運動健身' },
       { class: 'fa-solid fa-coins', label: '金幣回血' },
+      { class: 'fa-solid fa-money-bill-wave', label: '薪水現金' },
       { class: 'fa-solid fa-heart', label: '愛心心動' },
       { class: 'fa-solid fa-star', label: '星星珍藏' },
-      { class: 'fa-solid fa-tag', label: '預設標籤' }
+      { class: 'fa-solid fa-tag', label: '其他標籤' }
     ];
 
     const now = new Date();
