@@ -116,7 +116,7 @@
               </div>
             </div>
 
-            <!-- 代墊選項 (僅在支出時可選，預設不勾選就不強制) -->
+            <!-- 代墊選項 -->
             <div v-if="form.type === 'expense'" class="advance-box">
               <label class="checkbox-label">
                 <input type="checkbox" v-model="form.isAdvance" />
@@ -194,17 +194,18 @@
                 </div>
               </div>
 
-              <!-- 直接打色號專用區塊 -->
+              <!-- 修復後的色彩與色號輸入區塊 -->
               <div class="form-group full-width">
-                <label>圖表代表色 (可直接輸入 HEX 色號，如 #92A8D1)</label>
-                <div class="color-picker-wrapper">
-                  <input type="color" v-model="catForm.color" class="color-picker" />
+                <label>圖表代表色 (可點擊方塊選色，或直接手動打 HEX 色號)</label>
+                <div class="color-picker-wrapper-fixed">
+                  <input type="color" v-model="catForm.color" class="color-picker-box" title="點擊選擇顏色" />
                   <input 
                     type="text" 
                     v-model="catForm.color" 
                     placeholder="#92A8D1" 
-                    class="color-hex-input"
+                    class="color-hex-text-input"
                     maxlength="7"
+                    required
                   />
                 </div>
               </div>
@@ -1715,35 +1716,38 @@ body {
   margin-bottom: 14px;
 }
 
-.color-picker-wrapper {
+/* 修復後的色彩選擇器包覆容器：強固排版，避免跑版 */
+.color-picker-wrapper-fixed {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   background: #fffdf9;
   border: 1px solid #ebdcc4;
-  padding: 6px 12px;
+  padding: 8px 12px;
   border-radius: 12px;
   width: 100%;
+  box-sizing: border-box;
 }
 
-.color-picker {
-  width: 32px;
-  height: 28px;
+.color-picker-box {
+  width: 40px;
+  height: 34px;
   border: none;
   background: transparent;
   cursor: pointer;
   flex-shrink: 0;
+  padding: 0;
 }
 
-.color-hex-input {
+.color-hex-text-input {
   border: none !important;
   background: transparent !important;
-  font-size: 14px !important;
+  font-size: 15px !important;
   font-weight: 700 !important;
   color: #5c4d42 !important;
-  padding: 0 !important;
+  padding: 4px 0 !important;
   outline: none !important;
-  width: 100%;
+  width: 100% !important;
   text-transform: uppercase;
 }
 
