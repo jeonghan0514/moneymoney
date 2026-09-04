@@ -166,7 +166,7 @@
               <div class="form-row">
                 <div class="form-group">
                   <label>分類名稱</label>
-                  <input type="text" v-model="catForm.name" placeholder="例如：課金、美妝、周邊" required />
+                  <input type="text" v-model="catForm.name" placeholder="例如：送禮、課金、美妝" required />
                 </div>
                 <div class="form-group">
                   <label>收支類型</label>
@@ -177,7 +177,7 @@
                 </div>
               </div>
 
-              <!-- 可視化莫蘭迪圖示選擇網格 -->
+              <!-- 可視化莫蘭迪圖示選擇網格 (已新增更多可愛圖標) -->
               <div class="form-group full-width">
                 <label>選擇代表圖示 (點擊選擇)</label>
                 <div class="icon-picker-grid">
@@ -194,7 +194,7 @@
                 </div>
               </div>
 
-              <!-- 絕對不會跑版的色彩選擇器區塊 -->
+              <!-- 色彩與色號輸入區塊 -->
               <div class="form-group full-width">
                 <label>圖表代表色 (可點擊左側方塊選色，或直接手動打 HEX 色號)</label>
                 <div class="color-picker-wrapper-fixed">
@@ -513,11 +513,15 @@ export default {
     const catForm = ref({
       name: '',
       type: 'expense',
-      icon: 'fa-solid fa-wand-magic-sparkles',
-      color: '#92A8D1'
+      icon: 'fa-solid fa-gift',
+      color: '#E8A598'
     });
 
+    // 擴充更多可愛圖標（包含禮物、氣球、蛋糕等）
     const availableIcons = [
+      { class: 'fa-solid fa-gift', label: '禮物送禮' },
+      { class: 'fa-solid fa-cake-candles', label: '慶祝蛋糕' },
+      { class: 'fa-solid fa-balloon', label: '氣球派對' },
       { class: 'fa-solid fa-wand-magic-sparkles', label: '追星魔法' },
       { class: 'fa-solid fa-compact-disc', label: '專輯唱片' },
       { class: 'fa-solid fa-ticket', label: '票券門票' },
@@ -531,7 +535,6 @@ export default {
       { class: 'fa-solid fa-car', label: '交通出行' },
       { class: 'fa-solid fa-plane', label: '旅遊飛行' },
       { class: 'fa-solid fa-house', label: '居家生活' },
-      { class: 'fa-solid fa-gift', label: '禮物紅包' },
       { class: 'fa-solid fa-coins', label: '金幣回血' },
       { class: 'fa-solid fa-heart', label: '愛心心動' },
       { class: 'fa-solid fa-star', label: '星星珍藏' },
@@ -722,8 +725,8 @@ export default {
       catForm.value = {
         name: '',
         type: 'expense',
-        icon: 'fa-solid fa-wand-magic-sparkles',
-        color: '#92A8D1'
+        icon: 'fa-solid fa-gift',
+        color: '#E8A598'
       };
     };
 
@@ -1716,7 +1719,6 @@ body {
   margin-bottom: 14px;
 }
 
-/* 完美修復的色彩選擇器包覆容器：強制固定方塊大小、撐滿文字欄位 */
 .color-picker-wrapper-fixed {
   display: flex;
   align-items: center;
