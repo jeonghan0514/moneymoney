@@ -306,7 +306,6 @@
           <ul v-else class="record-list">
             <li v-for="item in filteredRecords" :key="item.id" :class="['record-item', item.type]">
               <div class="item-left">
-                <!-- 這裡的分類標籤改為動態讀取分類色彩 -->
                 <span class="category-badge" :style="getCategoryBadgeStyle(item.category)">
                   <i :class="['badge-icon', getCategoryIcon(item.category)]"></i>
                   {{ cleanCategoryName(item.category) }}
@@ -334,121 +333,81 @@
         </div>
       </div>
 
-      <!-- ==================== 分頁 3：🤝 互助協會 (代墊管理與設定) ==================== -->
+      <!-- ==================== 分頁 3：🤝 互助協會 (雙向代墊整合與結算) ==================== -->
       <div v-if="currentTab === 'advance'" class="tab-page-content">
         <div class="card-box tab-content">
-          <h3><i class="fa-solid fa-hand-holding-dollar"></i> 互助協會 (代墊與債務管理)</h3>
+          <h3><i class="fa-solid fa-hand-holding-dollar"></i> 互助協會 (雙向代墊與結算)</h3>
           
-          <!-- 互助協會內部的小分頁切換：別人欠我 vs 我欠別人 -->
-          <div class="sub-tab-nav margin-bottom-md">
-            <button :class="['sub-tab-btn', { active: advanceSubTab === 'lend' }]" @click="advanceSubTab = 'lend'">
-              <i class="fa-solid fa-arrow-right-arrow-left"></i> 別人欠我 ({{ pendingLendCount }})
-            </button>
-            <button :class="['sub-tab-btn', { active: advanceSubTab === 'borrow' }]" @click="advanceSubTab = 'borrow'">
-              <i class="fa-solid fa-wallet"></i> 我欠別人 ({{ pendingBorrowCount }})
-            </button>
+          <div class="advance-summary">
+            <span>未結清互助對象總覽 (自動互抵)</span>
+            <h2 class="advance-total">
+              {{ unifiedGroupList.length }} 位夥伴進行中
+            </h2>
           </div>
 
-          <!-- 區塊 A：別人欠我 (待收代墊) -->
-          <template v-if="advanceSubTab === 'lend'">
-            <div class="advance-summary">
-              <span>待收代墊款總計 (別人要還你)</span>
-              <h2 class="advance-total">
-                ${{ totalPendingLend.toLocaleString() }}
-              </h2>
-            </div>
+          <div v-if="unifiedGroupList.length === 0" class="status-msg">
+            <i class="fa-solid fa-circle-check msg-icon"></i> 太棒了！所有代墊與債務通通都結清了！🎉
+          </div>
 
-            <div v-if="groupedLendList.length === 0" class="status-msg">
-              <i class="fa-solid fa-circle-check msg-icon"></i> 目前沒有未結清的代墊，大家都還清囉！✨
-            </div>
-
-            <div v-else class="borrower-group-list">
-              <div v-for="group in groupedLendList" :key="group.borrower" class="borrower-card">
-                <div class="borrower-card-header">
-                  <div class="borrower-info">
-                    <span class="borrower-avatar"><i class="fa-solid fa-user"></i></span>
-                    <div class="borrower-name-box">
-                      <h4 class="borrower-name">{{ group.borrower }}</h4>
-                      <span class="borrower-count">
-                        小計: <strong>${{ group.total.toLocaleString() }}</strong> ({{ group.items.length }}筆)
-                      </span>
-                    </div>
-                  </div>
-
-                  <div class="borrower-header-actions">
-                    <button @click="copyGroupPrompt(group)" class="mini-action-btn copy" title="複製 LINE 催帳訊息">
-                      <i class="fa-solid fa-copy"></i> 複製
-                    </button>
-                    <button @click="settleAllForBorrower(group)" class="mini-action-btn settle-all" title="全額還清">
-                      <i class="fa-solid fa-check-double"></i> 還清
-                    </button>
+          <div v-else class="borrower-group-list">
+            <div v-for="group in unifiedGroupList" :key="group.name" class="borrower-card">
+              <div class="borrower-card-header">
+                <div class="borrower-info">
+                  <span class="borrower-avatar"><i class="fa-solid fa-user-group"></i></span>
+                  <div class="borrower-name-box">
+                    <h4 class="borrower-name">{{ group.name }}</h4>
+                    <span class="borrower-count">
+                      你幫他墊: <strong>${{ group.lendTotal.toLocaleString() }}</strong> | 他幫你墊: <strong class="text-blue">${{ group.borrowTotal.toLocaleString() }}</strong>
+                    </span>
                   </div>
                 </div>
 
-                <ul class="borrower-item-list">
-                  <li v-for="item in group.items" :key="item.id" class="borrower-sub-item">
-                    <div class="sub-item-left">
-                      <span class="sub-item-note">{{ cleanCategoryName(item.category) }} - {{ item.note || '未填寫備註' }}</span>
-                      <span class="sub-item-date">{{ item.date }}</span>
-                    </div>
-                    <div class="sub-item-right">
-                      <span class="sub-item-amount">${{ item.amount }}</span>
-                      <button @click="markAsSettled(item.id)" class="mini-btn" title="單筆還款">已還</button>
-                    </div>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </template>
-
-          <!-- 區塊 B：我欠別人 (待還債務) -->
-          <template v-if="advanceSubTab === 'borrow'">
-            <div class="advance-summary borrow-summary">
-              <span>待還債務總計 (你要還給別人)</span>
-              <h2 class="advance-total borrow-total">
-                ${{ totalPendingBorrow.toLocaleString() }}
-              </h2>
-            </div>
-
-            <div v-if="groupedBorrowList.length === 0" class="status-msg">
-              <i class="fa-solid fa-circle-check msg-icon"></i> 太棒了！你沒有欠別人錢，一身輕！🎉
-            </div>
-
-            <div v-else class="borrower-group-list">
-              <div v-for="group in groupedBorrowList" :key="group.borrower" class="borrower-card">
-                <div class="borrower-card-header">
-                  <div class="borrower-info">
-                    <span class="borrower-avatar borrow-avatar"><i class="fa-solid fa-user-shield"></i></span>
-                    <div class="borrower-name-box">
-                      <h4 class="borrower-name">{{ group.borrower }} (債主)</h4>
-                      <span class="borrower-count">
-                        應付小計: <strong class="text-blue">${{ group.total.toLocaleString() }}</strong> ({{ group.items.length }}筆)
-                      </span>
-                    </div>
-                  </div>
-
-                  <div class="borrower-header-actions">
-                    <button @click="settleAllForBorrower(group)" class="mini-action-btn settle-all-borrow" title="已結清">
-                      <i class="fa-solid fa-check-double"></i> 我已還清
-                    </button>
-                  </div>
+                <div class="borrower-header-actions">
+                  <button @click="copyUnifiedPrompt(group)" class="mini-action-btn copy" title="複製 LINE 結算對帳訊息">
+                    <i class="fa-solid fa-copy"></i> 複製對帳
+                  </button>
+                  <button @click="settleAllUnified(group)" class="mini-action-btn settle-all" title="全數結清此人所有帳款">
+                    <i class="fa-solid fa-check-double"></i> 全部結清
+                  </button>
                 </div>
-
-                <ul class="borrower-item-list">
-                  <li v-for="item in group.items" :key="item.id" class="borrower-sub-item">
-                    <div class="sub-item-left">
-                      <span class="sub-item-note">{{ cleanCategoryName(item.category) }} - {{ item.note || '未填寫備註' }}</span>
-                      <span class="sub-item-date">{{ item.date }}</span>
-                    </div>
-                    <div class="sub-item-right">
-                      <span class="sub-item-amount text-blue">${{ item.amount }}</span>
-                      <button @click="markAsSettled(item.id)" class="mini-btn borrow-btn" title="單筆還清">已還</button>
-                    </div>
-                  </li>
-                </ul>
               </div>
+
+              <!-- 智慧抵銷結算提示列 -->
+              <div class="net-result-banner" :class="group.netBalance >= 0 ? 'net-positive' : 'net-negative'">
+                <i class="fa-solid fa-scale-balanced"></i>
+                <span v-if="group.netBalance > 0">
+                  扣抵後：<strong>{{ group.name }} 總共要給你 ${{ group.netBalance.toLocaleString() }}</strong>
+                </span>
+                <span v-else-if="group.netBalance < 0">
+                  扣抵後：<strong>你要給 {{ group.name }} ${{ Math.abs(group.netBalance).toLocaleString() }}</strong>
+                </span>
+                <span v-else>
+                  扣抵後：<strong>雙方金額完全相抵，互不欠對方！✨</strong>
+                </span>
+              </div>
+
+              <!-- 明細清單 (包含我幫他墊與他幫我墊) -->
+              <ul class="borrower-item-list">
+                <li v-for="item in group.items" :key="item.id" class="borrower-sub-item">
+                  <div class="sub-item-left">
+                    <span class="sub-item-note">
+                      <span :class="item.advanceDirection === 'borrow' ? 'borrower-tag-blue' : 'borrower-tag'">
+                        [{{ item.advanceDirection === 'borrow' ? '他幫你付' : '你幫他付' }}]
+                      </span>
+                      {{ cleanCategoryName(item.category) }} - {{ item.note || '未填寫備註' }}
+                    </span>
+                    <span class="sub-item-date">{{ item.date }}</span>
+                  </div>
+                  <div class="sub-item-right">
+                    <span :class="item.advanceDirection === 'borrow' ? 'sub-item-amount text-blue' : 'sub-item-amount'">
+                      ${{ item.amount }}
+                    </span>
+                    <button @click="markAsSettled(item.id)" class="mini-btn" :class="{ 'borrow-btn': item.advanceDirection === 'borrow' }" title="單筆結清">已還</button>
+                  </div>
+                </li>
+              </ul>
             </div>
-          </template>
+          </div>
 
         </div>
       </div>
@@ -500,7 +459,6 @@ export default {
     
     const currentTab = ref('wallet');
     const walletSubTab = ref('form');
-    const advanceSubTab = ref('lend');
 
     const isPrivacyMode = ref(localStorage.getItem('privacy_mode') === 'true');
 
@@ -606,13 +564,12 @@ export default {
       return match ? match.icon : 'fa-solid fa-tag';
     };
 
-    // 取得歷史明細分類標籤的動態樣式（淡背景色 + 深色文字，凸顯質感）
     const getCategoryBadgeStyle = (category) => {
       const cleaned = cleanCategoryName(category);
       const match = displayAllCategories.value.find(c => c.name === cleaned);
       const color = match ? match.color : '#fefae0';
       return {
-        backgroundColor: color + '22', // 加上透明度作為柔和背景
+        backgroundColor: color + '22',
         borderColor: color + '66',
         color: '#5c4d42'
       };
@@ -805,8 +762,8 @@ export default {
       }
     };
 
-    const settleAllForBorrower = async (group) => {
-      if (!confirm(`確定與 ${group.borrower} 的這筆款項已經全部結清了嗎？`)) return;
+    const settleAllUnified = async (group) => {
+      if (!confirm(`確定要將與 ${group.name} 的所有未結清代墊與債務全部結清嗎？`)) return;
       try {
         const todayStr = new Date().toISOString().split('T')[0];
         const promises = group.items.map(item => 
@@ -822,15 +779,37 @@ export default {
       }
     };
 
-    const copyGroupPrompt = (group) => {
-      const details = group.items.map(item => 
-        `• ${item.date} ${cleanCategoryName(item.category)}${item.note ? ' (' + item.note + ')' : ''}: $${item.amount}`
-      ).join('\n');
+    const copyUnifiedPrompt = (group) => {
+      const lendItems = group.items.filter(i => i.advanceDirection !== 'borrow');
+      const borrowItems = group.items.filter(i => i.advanceDirection === 'borrow');
 
-      const text = `${group.borrower}～上次幫你代墊的項目如下：\n${details}\n\n👉 總共是 $${group.total} 喔！再麻煩你有空轉給我，感謝啦～✨`;
+      let text = `${group.name}～我們來對一下最近互助代墊的帳目：\n\n`;
+      if (lendItems.length > 0) {
+        text += `👉 我幫你墊的項目：\n`;
+        lendItems.forEach(item => {
+          text += `• ${item.date} ${cleanCategoryName(item.category)}${item.note ? ' (' + item.note + ')' : ''}: $${item.amount}\n`;
+        });
+        text += `(小計: $${group.lendTotal})\n\n`;
+      }
+
+      if (borrowItems.length > 0) {
+        text += `👉 你幫我墊的項目：\n`;
+        borrowItems.forEach(item => {
+          text += `• ${item.date} ${cleanCategoryName(item.category)}${item.note ? ' (' + item.note + ')' : ''}: $${item.amount}\n`;
+        });
+        text += `(小計: $${group.borrowTotal})\n\n`;
+      }
+
+      if (group.netBalance > 0) {
+        text += `✨ 互相扣抵後：你總共還要給我 $${group.netBalance} 喔！再麻煩你啦～`;
+      } else if (group.netBalance < 0) {
+        text += `✨ 互相扣抵後：我總共還要給你 $${Math.abs(group.netBalance)} 喔！我晚點轉給你～`;
+      } else {
+        text += `✨ 互相扣抵後：兩邊金額剛好互抵，我們互不欠對方啦！🎉`;
+      }
       
       navigator.clipboard.writeText(text).then(() => {
-        alert(`✨ 已複製給 ${group.borrower} 的完整催帳訊息！可以直接貼到 LINE 囉～`);
+        alert(`✨ 已複製給 ${group.name} 的雙向結算對帳訊息！`);
       });
     };
 
@@ -844,49 +823,53 @@ export default {
       }
     };
 
-    const pendingLendList = computed(() => {
-      return records.value.filter(r => r.isAdvance && r.advanceDirection !== 'borrow' && !r.isSettled);
+    // 整合後的雙向代墊清單計算 (依人名整合)
+    const pendingUnifiedList = computed(() => {
+      return records.value.filter(r => r.isAdvance && !r.isSettled);
     });
 
-    const pendingLendCount = computed(() => pendingLendList.value.length);
+    const pendingLendCount = computed(() => {
+      return records.value.filter(r => r.isAdvance && r.advanceDirection !== 'borrow' && !r.isSettled).length;
+    });
+
+    const pendingBorrowCount = computed(() => {
+      return records.value.filter(r => r.isAdvance && r.advanceDirection === 'borrow' && !r.isSettled).length;
+    });
 
     const totalPendingLend = computed(() => {
-      return pendingLendList.value.reduce((sum, r) => sum + r.amount, 0);
+      return records.value.filter(r => r.isAdvance && r.advanceDirection !== 'borrow' && !r.isSettled).reduce((sum, r) => sum + r.amount, 0);
     });
-
-    const groupedLendList = computed(() => {
-      const groups = {};
-      pendingLendList.value.forEach(item => {
-        const name = item.borrower || '未具名朋友';
-        if (!groups[name]) {
-          groups[name] = { borrower: name, total: 0, items: [] };
-        }
-        groups[name].items.push(item);
-        groups[name].total += item.amount;
-      });
-      return Object.values(groups);
-    });
-
-    const pendingBorrowList = computed(() => {
-      return records.value.filter(r => r.isAdvance && r.advanceDirection === 'borrow' && !r.isSettled);
-    });
-
-    const pendingBorrowCount = computed(() => pendingBorrowList.value.length);
 
     const totalPendingBorrow = computed(() => {
-      return pendingBorrowList.value.reduce((sum, r) => sum + r.amount, 0);
+      return records.value.filter(r => r.isAdvance && r.advanceDirection === 'borrow' && !r.isSettled).reduce((sum, r) => sum + r.amount, 0);
     });
 
-    const groupedBorrowList = computed(() => {
+    const unifiedGroupList = computed(() => {
       const groups = {};
-      pendingBorrowList.value.forEach(item => {
-        const name = item.borrower || '未具名債主';
+      pendingUnifiedList.value.forEach(item => {
+        const name = item.borrower || '未具名夥伴';
         if (!groups[name]) {
-          groups[name] = { borrower: name, total: 0, items: [] };
+          groups[name] = { 
+            name: name, 
+            lendTotal: 0, 
+            borrowTotal: 0, 
+            netBalance: 0, 
+            items: [] 
+          };
         }
         groups[name].items.push(item);
-        groups[name].total += item.amount;
+        if (item.advanceDirection === 'borrow') {
+          groups[name].borrowTotal += item.amount;
+        } else {
+          groups[name].lendTotal += item.amount;
+        }
       });
+
+      // 計算淨額：正數代表對方要給你，負數代表你要給對方
+      Object.values(groups).forEach(g => {
+        g.netBalance = g.lendTotal - g.borrowTotal;
+      });
+
       return Object.values(groups);
     });
 
@@ -949,7 +932,6 @@ export default {
       loading,
       currentTab,
       walletSubTab,
-      advanceSubTab,
       isPrivacyMode,
       togglePrivacy,
       editingId,
@@ -965,10 +947,9 @@ export default {
       filteredRecords,
       pendingLendCount,
       totalPendingLend,
-      groupedLendList,
       pendingBorrowCount,
       totalPendingBorrow,
-      groupedBorrowList,
+      unifiedGroupList,
       chartMonthRecords,
       form,
       cleanCategoryName,
@@ -982,8 +963,8 @@ export default {
       resetCatForm,
       deleteCustomCategory,
       markAsSettled,
-      settleAllForBorrower,
-      copyGroupPrompt,
+      settleAllUnified,
+      copyUnifiedPrompt,
       deleteRecord,
       totalIncome,
       totalExpense
@@ -1321,19 +1302,10 @@ body {
   color: #8c7355;
 }
 
-.advance-summary.borrow-summary {
-  background: #eef4f8;
-  border: 1px solid #d0e1fd;
-}
-
 .advance-total {
   margin: 6px 0 0 0;
   color: #e76f51;
   font-size: 28px;
-}
-
-.advance-total.borrow-total {
-  color: #457b9d;
 }
 
 .borrower-group-list {
@@ -1354,7 +1326,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .borrower-info {
@@ -1374,10 +1346,6 @@ body {
   justify-content: center;
   font-size: 16px;
   flex-shrink: 0;
-}
-
-.borrower-avatar.borrow-avatar {
-  background: #457b9d;
 }
 
 .borrower-name-box {
@@ -1439,9 +1407,27 @@ body {
   color: white;
 }
 
-.mini-action-btn.settle-all-borrow {
-  background: #457b9d;
-  color: white;
+/* 智慧抵銷結算條樣式 */
+.net-result-banner {
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.net-positive {
+  background: #fefae0;
+  border: 1px solid #faedcd;
+  color: #785232;
+}
+
+.net-negative {
+  background: #eef4f8;
+  border: 1px solid #d0e1fd;
+  color: #1d3557;
 }
 
 .borrower-item-list {
@@ -1589,7 +1575,7 @@ body {
 }
 
 .record-form-group label {
-  font-size: 13px;
+  fn-size: 13px;
   font-weight: 600;
   margin-bottom: 6px;
   color: #8c7355;
@@ -1632,7 +1618,7 @@ body {
   box-sizing: border-box;
 }
 
-/* 一般表單樣式 (供分類管理等其他表單使用) */
+/* 一般表單樣式 */
 .form-row {
   display: flex;
   gap: 15px;
