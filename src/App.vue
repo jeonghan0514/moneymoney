@@ -306,7 +306,8 @@
           <ul v-else class="record-list">
             <li v-for="item in filteredRecords" :key="item.id" :class="['record-item', item.type]">
               <div class="item-left">
-                <span class="category-badge">
+                <!-- 這裡的分類標籤改為動態讀取分類色彩 -->
+                <span class="category-badge" :style="getCategoryBadgeStyle(item.category)">
                   <i :class="['badge-icon', getCategoryIcon(item.category)]"></i>
                   {{ cleanCategoryName(item.category) }}
                 </span>
@@ -517,7 +518,6 @@ export default {
       color: '#E8A598'
     });
 
-    // 26個精選萬用圖標庫 (涵蓋追星、送禮、日常、美食、娛樂、交通等)
     const availableIcons = [
       { class: 'fa-solid fa-gift', label: '送禮/禮物' },
       { class: 'fa-solid fa-cake-candles', label: '慶祝/蛋糕' },
@@ -604,6 +604,18 @@ export default {
       const cleaned = cleanCategoryName(category);
       const match = displayAllCategories.value.find(c => c.name === cleaned);
       return match ? match.icon : 'fa-solid fa-tag';
+    };
+
+    // 取得歷史明細分類標籤的動態樣式（淡背景色 + 深色文字，凸顯質感）
+    const getCategoryBadgeStyle = (category) => {
+      const cleaned = cleanCategoryName(category);
+      const match = displayAllCategories.value.find(c => c.name === cleaned);
+      const color = match ? match.color : '#fefae0';
+      return {
+        backgroundColor: color + '22', // 加上透明度作為柔和背景
+        borderColor: color + '66',
+        color: '#5c4d42'
+      };
     };
 
     const form = ref({
@@ -961,6 +973,7 @@ export default {
       form,
       cleanCategoryName,
       getCategoryIcon,
+      getCategoryBadgeStyle,
       handleSignIn,
       handleSignOut,
       addRecord,
@@ -1916,9 +1929,7 @@ body {
 }
 
 .category-badge {
-  background: #fefae0;
-  border: 1px solid #faedcd;
-  color: #785232;
+  border: 1px solid;
   padding: 6px 12px;
   border-radius: 10px;
   font-size: 13px;
