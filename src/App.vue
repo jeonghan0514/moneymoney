@@ -116,22 +116,29 @@
               </div>
             </div>
 
-            <!-- 代墊選項 (支援別人幫我出 或 我幫別人出) -->
+            <!-- 代墊選項 (僅在支出時可選，預設不勾選就不強制) -->
             <div v-if="form.type === 'expense'" class="advance-box">
-              <div class="advance-type-selector">
-                <label class="radio-label">
-                  <input type="radio" value="lend" v-model="form.advanceDirection" />
-                  <span>我幫朋友代墊</span>
-                </label>
-                <label class="radio-label">
-                  <input type="radio" value="borrow" v-model="form.advanceDirection" />
-                  <span>朋友幫我代墊 (我欠人)</span>
-                </label>
-              </div>
+              <label class="checkbox-label">
+                <input type="checkbox" v-model="form.isAdvance" />
+                <span><i class="fa-solid fa-user-tag"></i> 這筆跟代墊/債務有關 (勾選後可設定)</span>
+              </label>
 
-              <div class="record-form-group margin-top-sm">
-                <label>{{ form.advanceDirection === 'lend' ? '對象 (朋友名字)' : '債主 (誰幫你付的)' }}</label>
-                <input type="text" v-model="form.borrower" placeholder="例如：小明、阿華" required />
+              <div v-if="form.isAdvance" class="advance-sub-settings margin-top-sm">
+                <div class="advance-type-selector">
+                  <label class="radio-label">
+                    <input type="radio" value="lend" v-model="form.advanceDirection" />
+                    <span>我幫朋友代墊 (別人欠我)</span>
+                  </label>
+                  <label class="radio-label">
+                    <input type="radio" value="borrow" v-model="form.advanceDirection" />
+                    <span>朋友幫我代墊 (我欠別人)</span>
+                  </label>
+                </div>
+
+                <div class="record-form-group margin-top-sm">
+                  <label>{{ form.advanceDirection === 'lend' ? '對象 (朋友名字)' : '債主 (誰幫你付的)' }}</label>
+                  <input type="text" v-model="form.borrower" placeholder="例如：小明、阿華" required />
+                </div>
               </div>
             </div>
 
@@ -491,7 +498,7 @@ export default {
     
     const currentTab = ref('wallet');
     const walletSubTab = ref('form');
-    const advanceSubTab = ref('lend'); // 'lend' = 別人欠我, 'borrow' = 我欠別人
+    const advanceSubTab = ref('lend');
 
     const isPrivacyMode = ref(localStorage.getItem('privacy_mode') === 'true');
 
@@ -596,7 +603,7 @@ export default {
       amount: '',
       note: '',
       isAdvance: false,
-      advanceDirection: 'lend', // 'lend' = 我幫朋友墊, 'borrow' = 朋友幫我墊
+      advanceDirection: 'lend',
       borrower: ''
     });
 
@@ -732,6 +739,9 @@ export default {
 
     const addRecord = async () => {
       if (!form.value.amount || form.value.amount <= 0 || !user.value) return;
+      
+      const isAdv = form.value.type === 'expense' ? form.value.isAdvance : false;
+
       try {
         await addDoc(collection(db, 'personal_records'), {
           uid: user.value.uid,
@@ -740,9 +750,9 @@ export default {
           category: form.value.category,
           amount: Number(form.value.amount),
           note: form.value.note,
-          isAdvance: form.value.type === 'expense' ? form.value.isAdvance : false,
-          advanceDirection: form.value.isAdvance ? form.value.advanceDirection : 'lend',
-          borrower: form.value.isAdvance ? form.value.borrower.trim() : '',
+          isAdvance: isAdv,
+          advanceDirection: isAdv ? form.value.advanceDirection : 'lend',
+          borrower: isAdv ? form.value.borrower.trim() : '',
           isSettled: false,
           settledDate: null,
           createdAt: new Date()
@@ -812,7 +822,6 @@ export default {
       }
     };
 
-    // 1. 別人欠我 (lend) 未結清列表
     const pendingLendList = computed(() => {
       return records.value.filter(r => r.isAdvance && r.advanceDirection !== 'borrow' && !r.isSettled);
     });
@@ -836,7 +845,6 @@ export default {
       return Object.values(groups);
     });
 
-    // 2. 我欠別人 (borrow) 未結清列表
     const pendingBorrowList = computed(() => {
       return records.value.filter(r => r.isAdvance && r.advanceDirection === 'borrow' && !r.isSettled);
     });
@@ -876,7 +884,6 @@ export default {
       return records.value.filter(r => isDateMatch(r.date));
     });
 
-    // 本月回血 = 本月原生收入 + 本月收到還款的代墊款
     const totalIncome = computed(() => {
       const normalIncome = currentMonthRecords.value
         .filter(r => r.type === 'income')
